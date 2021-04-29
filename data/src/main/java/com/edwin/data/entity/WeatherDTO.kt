@@ -1,4 +1,4 @@
-package com.edwin.data.network.response
+package com.edwin.data.entity
 
 data class WeatherDTO(
     val coord: Map<String, Double>,
