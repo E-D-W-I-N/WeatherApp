@@ -8,6 +8,22 @@
     <fragment
         android:id="@+id/mapFragment"
         android:name="com.edwin.weatherapp.feature.map.MapFragment"
-        android:label="map_fragment"
-        tools:layout="@layout/map_fragment" />
+        android:label="Global Weather"
+        tools:layout="@layout/map_fragment">
+        <action
+            android:id="@+id/action_mapFragment_to_weatherDetailsFragment"
+            app:destination="@id/weatherDetailsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/weatherDetailsFragment"
+        android:name="com.edwin.weatherapp.feature.weatherDetails.WeatherDetailsFragment"
+        android:label="{cityName}"
+        tools:layout="@layout/weather_details_fragment">
+        <action
+            android:id="@+id/action_weatherDetailsFragment_to_mapFragment"
+            app:destination="@id/mapFragment" />
+        <argument
+            android:name="cityName"
+            app:argType="string" />
+    </fragment>
 </navigation>

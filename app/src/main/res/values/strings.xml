@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">WeatherApp</string>
+    <string name="permission_granted">Permission granted</string>
+    <string name="permission_denied">Permission denied</string>
+    <string name="permission_dialog_message">Permission to access your location is required to use this function</string>
+    <string name="permission_dialog_title">Permission required</string>
+    <string name="positive_button_text">OK</string>
+    <string name="negative_button_text">No, thanks</string>
+    <string name="weather_icon">Weather Icon</string>
+    <string name="humidity">HUMIDITY</string>
+    <string name="wind">WIND</string>
+    <string name="pressure">PRESSURE</string>
+    <string name="temperature_label">°C</string>
+    <string name="show_weather">SHOW WEATHER</string>
+    <string name="close_window_icon">Close window icon</string>
+    <string name="cityLatlng">%f, %f</string>
 </resources>

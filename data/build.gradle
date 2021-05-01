@@ -43,6 +43,9 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
 
+    // Location
+    implementation 'com.google.android.gms:play-services-location:18.0.0'
+
     // Domain Module
     implementation project(":domain")
 }
