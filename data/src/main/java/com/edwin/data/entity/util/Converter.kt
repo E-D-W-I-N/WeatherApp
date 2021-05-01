@@ -1,6 +1,6 @@
-package com.edwin.domain.util
+package com.edwin.data.entity.util
 
-import com.edwin.data.network.response.WeatherDTO
+import com.edwin.data.entity.WeatherDTO
 import com.edwin.domain.model.WeatherDetails
 
 fun WeatherDTO.toDomain(): WeatherDetails {

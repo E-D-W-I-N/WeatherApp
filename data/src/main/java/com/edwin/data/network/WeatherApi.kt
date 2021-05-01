@@ -1,6 +1,6 @@
 package com.edwin.data.network
 
-import com.edwin.data.network.response.WeatherDTO
+import com.edwin.data.entity.WeatherDTO
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
