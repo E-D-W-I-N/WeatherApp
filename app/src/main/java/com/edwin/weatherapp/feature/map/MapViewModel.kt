@@ -2,9 +2,9 @@ package com.edwin.weatherapp.feature.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import com.edwin.domain.usecase.GetWeatherDetailsUseCase
+import com.edwin.domain.usecase.GetFusedLocationUseCase
 
-class MapViewModel(getWeatherDetailsUseCase: GetWeatherDetailsUseCase) : ViewModel() {
+class MapViewModel(getFusedLocationUseCase: GetFusedLocationUseCase) : ViewModel() {
 
-    val weatherDetails = getWeatherDetailsUseCase.getWeatherDetails("Tomsk").asLiveData()
+    val fusedLocation = getFusedLocationUseCase.getFusedLocation().asLiveData()
 }
