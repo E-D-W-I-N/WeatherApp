@@ -6,6 +6,9 @@ import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
@@ -68,6 +71,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                 findNavController().navigate(action)
             }
         }
+        setHasOptionsMenu(true)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -135,6 +139,21 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
             }
             .setNegativeButton(getString(R.string.negative_button_text)) { _, _ -> }
             .create().show()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_fragment_map, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_search -> {
+                showToast(getString(R.string.search_toast_text), Toast.LENGTH_LONG)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     override fun onStart() {
