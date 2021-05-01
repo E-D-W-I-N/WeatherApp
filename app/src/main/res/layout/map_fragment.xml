@@ -21,7 +21,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="24dp"
-        android:visibility="gone"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -52,7 +52,7 @@
                 app:layout_constraintTop_toBottomOf="@id/city_name"
                 tools:text="45°16'44.7 N 9°43'33.2 E" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/show_weather_button"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -61,6 +61,9 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="16dp"
                 android:text="@string/show_weather"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/blue"
+                android:textColor="@color/blue"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
