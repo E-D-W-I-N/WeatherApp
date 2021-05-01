@@ -14,4 +14,6 @@
     <string name="show_weather">SHOW WEATHER</string>
     <string name="close_window_icon">Close window icon</string>
     <string name="cityLatlng">%f, %f</string>
+    <string name="search_icon">Search Icon</string>
+    <string name="search_toast_text">Search will be implemented soon</string>
 </resources>
