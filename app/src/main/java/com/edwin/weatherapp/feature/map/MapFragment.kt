@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.MapFragmentBinding
+import com.edwin.weatherapp.util.animateIn
+import com.edwin.weatherapp.util.animateOut
 import com.edwin.weatherapp.util.icon
 import com.edwin.weatherapp.util.showToast
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -35,7 +37,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     companion object {
         private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION
-        private const val MAPVIEW_BUNDLE_KEY = "MapViewBundleKey"
         private const val ON_START_MAP_ZOOM = 4F
         private const val ON_CLICK_MAP_ZOOM = 8F
     }
@@ -54,15 +55,12 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = MapFragmentBinding.bind(view)
-
-        val mapViewBundle = savedInstanceState?.getBundle(MAPVIEW_BUNDLE_KEY)
         binding.apply {
-            mapView.onCreate(mapViewBundle)
+            mapView.onCreate(savedInstanceState)
             mapView.getMapAsync(this@MapFragment)
 
-            //setup buttons on customView
             closeWindowButton.setOnClickListener {
-                showWeatherWindow.visibility = View.GONE
+                showWeatherWindow.animateOut()
             }
             showWeatherButton.setOnClickListener {
                 val action = MapFragmentDirections.actionMapFragmentToWeatherDetailsFragment(
@@ -76,18 +74,21 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
+        checkPermissions()
         val geoCoder = Geocoder(requireContext())
         map.setOnMapClickListener { latLng ->
             map.clear()
             map.addMarker(MarkerOptions().position(latLng))
             val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_CLICK_MAP_ZOOM)
             map.animateCamera(cameraPosition)
-            val address = geoCoder
-                .getFromLocation(latLng.latitude, latLng.longitude, 1).first()
+            val address = geoCoder.getFromLocation(
+                latLng.latitude,
+                latLng.longitude,
+                1
+            ).first()
             if (!address.locality.isNullOrBlank()) {
                 binding.apply {
-                    showWeatherWindow.visibility = View.VISIBLE
+                    showWeatherWindow.animateIn()
                     cityName.text = address.locality
                     cityLatlng.text = getString(
                         R.string.cityLatlng,
@@ -97,22 +98,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                 }
             }
         }
-        checkPermissions()
-    }
-
-    private fun moveCameraToCurrentLocation() {
-        viewModel.fusedLocation.observe(viewLifecycleOwner, { result ->
-            val resultLocation = result.getOrDefault(Location(LocationManager.GPS_PROVIDER))
-            val latLng = LatLng(resultLocation.latitude, resultLocation.longitude)
-            val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_START_MAP_ZOOM)
-            map.animateCamera(cameraPosition)
-            map.addMarker(
-                MarkerOptions()
-                    .position(latLng)
-                    .title("You're here")
-                    .icon(requireContext(), R.drawable.ic_my_location)
-            )
-        })
     }
 
     private fun checkPermissions() {
@@ -128,6 +113,21 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
             }
             else -> requestPermissionLauncher.launch(LOCATION_PERMISSION)
         }
+    }
+
+    private fun moveCameraToCurrentLocation() {
+        viewModel.fusedLocation.observe(viewLifecycleOwner, { result ->
+            val resultLocation = result.getOrDefault(Location(LocationManager.GPS_PROVIDER))
+            val latLng = LatLng(resultLocation.latitude, resultLocation.longitude)
+            val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_START_MAP_ZOOM)
+            map.animateCamera(cameraPosition)
+            map.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .title("You're here")
+                    .icon(requireContext(), R.drawable.ic_my_location)
+            )
+        })
     }
 
     private fun showDialog() {
@@ -188,10 +188,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        val mapViewBundle = outState.getBundle(MAPVIEW_BUNDLE_KEY) ?: Bundle().also {
-            outState.putBundle(MAPVIEW_BUNDLE_KEY, it)
-        }
-        binding.mapView.onSaveInstanceState(mapViewBundle)
+        binding.mapView.onSaveInstanceState(outState)
     }
 
 }
