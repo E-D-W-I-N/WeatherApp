@@ -10,6 +10,6 @@ fun WeatherDTO.toDomain(): WeatherDetails {
         generalInfo = weather.first().description,
         humidity = main["humidity"]?.toInt() ?: 0,
         windSpeed = wind["speed"] ?: 0.0,
-        airPressure = main["pressure"] ?: 0.0
+        pressure = main["pressure"] ?: 0.0
     )
 }

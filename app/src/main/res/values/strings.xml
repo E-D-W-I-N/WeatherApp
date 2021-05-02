@@ -4,16 +4,20 @@
     <string name="permission_denied">Permission denied</string>
     <string name="permission_dialog_message">Permission to access your location is required to use this function</string>
     <string name="permission_dialog_title">Permission required</string>
-    <string name="positive_button_text">OK</string>
-    <string name="negative_button_text">No, thanks</string>
     <string name="weather_icon">Weather Icon</string>
     <string name="humidity">HUMIDITY</string>
+    <string name="humidity_value">%d%%</string>
     <string name="wind">WIND</string>
+    <string name="wind_value">%.2f m/s</string>
     <string name="pressure">PRESSURE</string>
+    <string name="pressure_value">%.2f mm Hg</string>
     <string name="temperature_label">°C</string>
     <string name="show_weather">SHOW WEATHER</string>
     <string name="close_window_icon">Close window icon</string>
     <string name="cityLatlng">%f, %f</string>
     <string name="search_icon">Search Icon</string>
     <string name="search_toast_text">Search will be implemented soon</string>
+    <string name="share_toast_text">Share will be implemented soon</string>
+    <string name="action_retry">Retry</string>
+    <string name="share">Share</string>
 </resources>

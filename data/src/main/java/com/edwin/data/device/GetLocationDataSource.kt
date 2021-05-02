@@ -5,7 +5,7 @@ import android.location.Location
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.tasks.Tasks
 
-class GetLocation(private val fusedLocationProviderClient: FusedLocationProviderClient) {
+class GetLocationDataSource(private val fusedLocationProviderClient: FusedLocationProviderClient) {
 
     @SuppressLint("MissingPermission")
     fun getFusedLocation(): Location = Tasks.await(fusedLocationProviderClient.lastLocation)

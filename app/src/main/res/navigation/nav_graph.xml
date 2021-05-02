@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/mapFragment"
-        android:name="com.edwin.weatherapp.feature.map.MapFragment"
+        android:name="com.edwin.weatherapp.presentation.map.MapFragment"
         android:label="Global Weather"
         tools:layout="@layout/map_fragment">
         <action
@@ -16,7 +16,7 @@
     </fragment>
     <fragment
         android:id="@+id/weatherDetailsFragment"
-        android:name="com.edwin.weatherapp.feature.weatherDetails.WeatherDetailsFragment"
+        android:name="com.edwin.weatherapp.presentation.weatherDetails.WeatherDetailsFragment"
         android:label="{cityName}"
         tools:layout="@layout/weather_details_fragment">
         <action
@@ -25,5 +25,11 @@
         <argument
             android:name="cityName"
             app:argType="string" />
+        <argument
+            android:name="latitude"
+            app:argType="float" />
+        <argument
+            android:name="longitude"
+            app:argType="float" />
     </fragment>
 </navigation>
