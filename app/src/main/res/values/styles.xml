@@ -2,4 +2,11 @@
 <resources>
 
     <style name="AlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert" />
+
+    <style name="circularImageView" parent="">
+        <item name="cornerFamilyTopLeft">rounded</item>
+        <item name="cornerSizeTopLeft">50%</item>
+        <item name="cornerFamilyBottomLeft">rounded</item>
+        <item name="cornerSizeBottomLeft">50%</item>
+    </style>
 </resources>
