@@ -5,11 +5,12 @@ import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-interface WeatherApi {
+interface WeatherApiDataSource {
 
     @GET("weather")
     fun getWeatherResponse(
-        @Query("q") q: String,
+        @Query("lat") lat: Float,
+        @Query("lon") lon: Float,
         @Query("appid") appid: String,
         @Query("units") units: String
     ): Call<WeatherDTO>

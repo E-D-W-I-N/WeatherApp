@@ -1,32 +1,33 @@
-package com.edwin.weatherapp.feature.map
+package com.edwin.weatherapp.presentation.map
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Geocoder
-import android.location.Location
-import android.location.LocationManager
+import android.location.Address
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.edwin.domain.DataResult
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.MapFragmentBinding
-import com.edwin.weatherapp.util.animateIn
-import com.edwin.weatherapp.util.animateOut
-import com.edwin.weatherapp.util.icon
-import com.edwin.weatherapp.util.showToast
+import com.edwin.weatherapp.util.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
@@ -45,10 +46,18 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            showToast(getString(R.string.permission_granted), Toast.LENGTH_LONG)
+            showSnackbar(getString(R.string.permission_granted)) {
+                action(android.R.string.ok) {
+                    this.dismiss()
+                }
+            }
             moveCameraToCurrentLocation()
         } else {
-            showToast(getString(R.string.permission_denied), Toast.LENGTH_LONG)
+            showSnackbar(getString(R.string.permission_denied)) {
+                action(android.R.string.ok) {
+                    this.dismiss()
+                }
+            }
         }
     }
 
@@ -58,16 +67,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         binding.apply {
             mapView.onCreate(savedInstanceState)
             mapView.getMapAsync(this@MapFragment)
-
-            closeWindowButton.setOnClickListener {
-                showWeatherWindow.animateOut()
-            }
-            showWeatherButton.setOnClickListener {
-                val action = MapFragmentDirections.actionMapFragmentToWeatherDetailsFragment(
-                    cityName.text.toString()
-                )
-                findNavController().navigate(action)
-            }
         }
         setHasOptionsMenu(true)
     }
@@ -75,29 +74,51 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         checkPermissions()
-        val geoCoder = Geocoder(requireContext())
         map.setOnMapClickListener { latLng ->
             map.clear()
             map.addMarker(MarkerOptions().position(latLng))
             val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_CLICK_MAP_ZOOM)
             map.animateCamera(cameraPosition)
-            val address = geoCoder.getFromLocation(
-                latLng.latitude,
-                latLng.longitude,
-                1
-            ).first()
-            if (!address.locality.isNullOrBlank()) {
-                binding.apply {
-                    showWeatherWindow.animateIn()
-                    cityName.text = address.locality
-                    cityLatlng.text = getString(
-                        R.string.cityLatlng,
-                        address.latitude,
-                        address.longitude
-                    )
-                }
-            }
+            viewModel.getCityName(latLng.latitude, latLng.longitude)
         }
+        val flow = viewModel.cityName.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+        flow.onEach { result ->
+            when (result) {
+                is DataResult.Success -> {
+                    binding.progressBar.visibility = View.INVISIBLE
+                    setupShowWeatherWindow(result.data)
+                }
+                is DataResult.Error -> {
+                    binding.progressBar.visibility = View.INVISIBLE
+                    showSnackbar(result.errorMessage, Snackbar.LENGTH_SHORT) {
+                        action(android.R.string.ok) {
+                            this.dismiss()
+                        }
+                    }
+                }
+                is DataResult.Loading -> binding.progressBar.visibility = View.VISIBLE
+                else -> Unit
+            }
+        }.launchIn(viewLifecycleOwner.lifecycleScope)
+    }
+
+    private fun setupShowWeatherWindow(address: Address) = with(binding) {
+        cityName.text = address.locality
+        cityLatlng.text = getString(
+            R.string.cityLatlng,
+            address.latitude,
+            address.longitude
+        )
+        closeWindowButton.setOnClickListener {
+            showWeatherWindow.animateOut()
+        }
+        showWeatherButton.setOnClickListener {
+            val action = MapFragmentDirections.actionMapFragmentToWeatherDetailsFragment(
+                address.locality, address.latitude.toFloat(), address.longitude.toFloat()
+            )
+            findNavController().navigate(action)
+        }
+        showWeatherWindow.animateIn()
     }
 
     private fun checkPermissions() {
@@ -116,28 +137,46 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     }
 
     private fun moveCameraToCurrentLocation() {
-        viewModel.fusedLocation.observe(viewLifecycleOwner, { result ->
-            val resultLocation = result.getOrDefault(Location(LocationManager.GPS_PROVIDER))
-            val latLng = LatLng(resultLocation.latitude, resultLocation.longitude)
-            val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_START_MAP_ZOOM)
-            map.animateCamera(cameraPosition)
-            map.addMarker(
-                MarkerOptions()
-                    .position(latLng)
-                    .title("You're here")
-                    .icon(requireContext(), R.drawable.ic_my_location)
-            )
-        })
+        viewModel.getFusedLocation()
+        val flow = viewModel.fusedLocation.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+        flow.onEach { result ->
+            when (result) {
+                is DataResult.Success -> {
+                    binding.progressBar.visibility = View.INVISIBLE
+                    val resultLocation = result.data
+                    val latLng = LatLng(resultLocation.latitude, resultLocation.longitude)
+                    val cameraPosition =
+                        CameraUpdateFactory.newLatLngZoom(latLng, ON_START_MAP_ZOOM)
+                    map.animateCamera(cameraPosition)
+                    map.addMarker(
+                        MarkerOptions()
+                            .position(latLng)
+                            .title("You're here")
+                            .icon(requireContext(), R.drawable.ic_my_location)
+                    )
+                }
+                is DataResult.Error -> {
+                    binding.progressBar.visibility = View.INVISIBLE
+                    showSnackbar(result.errorMessage) {
+                        action(R.string.action_retry) {
+                            moveCameraToCurrentLocation()
+                        }
+                    }
+                }
+                is DataResult.Loading -> binding.progressBar.visibility = View.VISIBLE
+                else -> Unit
+            }
+        }.launchIn(viewLifecycleOwner.lifecycleScope)
     }
 
     private fun showDialog() {
         AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
             .setMessage(getString(R.string.permission_dialog_message))
             .setTitle(getString(R.string.permission_dialog_title))
-            .setPositiveButton(getString(R.string.positive_button_text)) { _, _ ->
+            .setPositiveButton(getString(android.R.string.ok)) { _, _ ->
                 requestPermissionLauncher.launch(LOCATION_PERMISSION)
             }
-            .setNegativeButton(getString(R.string.negative_button_text)) { _, _ -> }
+            .setNegativeButton(getString(android.R.string.cancel)) { _, _ -> }
             .create().show()
     }
 
@@ -149,7 +188,11 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_search -> {
-                showToast(getString(R.string.search_toast_text), Toast.LENGTH_LONG)
+                showSnackbar(getString(R.string.search_toast_text)) {
+                    action(android.R.string.ok) {
+                        this.dismiss()
+                    }
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -174,11 +217,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     override fun onStop() {
         super.onStop()
         binding.mapView.onStop()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        binding.mapView.onDestroy()
     }
 
     override fun onLowMemory() {
