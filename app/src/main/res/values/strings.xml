@@ -8,7 +8,7 @@
     <string name="humidity">HUMIDITY</string>
     <string name="humidity_value">%d%%</string>
     <string name="wind">WIND</string>
-    <string name="wind_value">%.2f m/s</string>
+    <string name="wind_value">%s %.2f m/s</string>
     <string name="pressure">PRESSURE</string>
     <string name="pressure_value">%.2f mm Hg</string>
     <string name="temperature_label">°C</string>
@@ -20,4 +20,10 @@
     <string name="share_toast_text">Share will be implemented soon</string>
     <string name="action_retry">Retry</string>
     <string name="share">Share</string>
+    <string name="marker_title">You are here</string>
+    <string name="no_city_error_text">No city here</string>
+    <string name="current_location_error_text">Can\'t get your current location</string>
+    <string name="check_connection_error_text">Can\'t get city location. Check your Internet connection</string>
+    <string name="host_failure_error_text">Can\'t reach server. Check your Internet connection</string>
+    <string name="no_weather_data_error_text">There is no weather data for this place</string>
 </resources>

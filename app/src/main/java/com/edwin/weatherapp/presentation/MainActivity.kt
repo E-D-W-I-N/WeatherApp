@@ -1,4 +1,4 @@
-package com.edwin.weatherapp
+package com.edwin.weatherapp.presentation
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -6,6 +6,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupActionBarWithNavController
+import com.edwin.weatherapp.R
 
 class MainActivity : AppCompatActivity() {
 

@@ -2,15 +2,14 @@ package com.edwin.weatherapp.presentation.map
 
 import android.location.Address
 import android.location.Location
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.edwin.domain.DataResult
 import com.edwin.domain.usecase.GetAddressFromGeocoderUseCase
 import com.edwin.domain.usecase.GetFusedLocationUseCase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.edwin.weatherapp.util.asLiveData
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 
 class MapViewModel(
@@ -18,19 +17,17 @@ class MapViewModel(
     private val getAddressFromGeocoderUseCase: GetAddressFromGeocoderUseCase
 ) : ViewModel() {
 
-    private val _fusedLocation = MutableStateFlow<DataResult<Location>>(DataResult.Empty)
-    val fusedLocation: StateFlow<DataResult<Location>> = _fusedLocation.asStateFlow()
+    private val _fusedLocation = MutableLiveData<Result<Location>>()
+    val fusedLocation: LiveData<Result<Location>> = _fusedLocation.asLiveData()
 
-    private val _cityName = MutableStateFlow<DataResult<Address>>(DataResult.Empty)
-    val cityName: StateFlow<DataResult<Address>> = _cityName.asStateFlow()
+    private val _address = MutableLiveData<Result<Address>>()
+    val address: LiveData<Result<Address>> = _address.asLiveData()
 
-    fun getFusedLocation() = viewModelScope.launch(Dispatchers.IO) {
-        _fusedLocation.value = DataResult.Loading
-        _fusedLocation.value = getFusedLocationUseCase.getFusedLocation()
+    fun getFusedLocation() = viewModelScope.launch {
+        _fusedLocation.value = getFusedLocationUseCase.invoke().single()
     }
 
-    fun getCityName(latitude: Double, longitude: Double) = viewModelScope.launch(Dispatchers.IO) {
-        _cityName.value = DataResult.Loading
-        _cityName.value = getAddressFromGeocoderUseCase.getAddress(latitude, longitude)
+    fun getAddress(latitude: Double, longitude: Double) = viewModelScope.launch {
+        _address.value = getAddressFromGeocoderUseCase.invoke(latitude, longitude).single()
     }
 }

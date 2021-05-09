@@ -6,9 +6,9 @@ import com.edwin.domain.model.WeatherDetails
 
 interface WeatherRepository {
 
-    fun getWeatherResponse(latitude: Float, longitude: Float): DataResult<WeatherDetails?>
+    fun getWeatherResponse(latitude: Float, longitude: Float): WeatherDetails?
 
-    fun getFusedLocation(): DataResult<Location>
+    fun getFusedLocation(): Location
 
-    fun getAddress(latitude: Double, longitude: Double): DataResult<Address>
+    fun getAddress(latitude: Double, longitude: Double): Address
 }

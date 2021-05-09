@@ -1,16 +1,32 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.WeatherApp" parent="Theme.MaterialComponents.DayNight">
-        <!-- Primary brand color. -->
+
+    <style name="Theme.WeatherApp" parent="Base.Theme.WeatherApp">
         <item name="colorPrimary">@color/white</item>
-        <item name="colorPrimaryVariant">@color/gray_757</item>
-        <item name="colorOnPrimary">@color/blue</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/purple_700</item>
-        <item name="colorSecondaryVariant">@color/purple_500</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <item name="colorPrimaryDark">@color/gray_B2B</item>
+        <item name="android:textColor">@color/gray_353</item>
+
+        <!-- Snackbar -->
+        <item name="snackbarStyle">@style/SnackbarLightTheme</item>
+        <item name="snackbarButtonStyle">@style/MaterialSnackbarTextButtonLightTheme</item>
+        <item name="snackbarTextViewStyle">@style/MaterialSnackbarTextViewLightTheme</item>
     </style>
+
+    <style name="Base.Theme.WeatherApp" parent="Theme.MaterialComponents.DayNight">
+        <item name="fontFamily">@font/roboto</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryDark</item>
+    </style>
+
+    <style name="SnackbarLightTheme" parent="Widget.MaterialComponents.Snackbar">
+        <item name="android:backgroundTint">?attr/colorPrimary</item>
+    </style>
+
+    <style name="MaterialSnackbarTextButtonLightTheme" parent="@style/Widget.MaterialComponents.Button.TextButton.Snackbar">
+        <item name="android:backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">@color/gray_353</item>
+    </style>
+
+    <style name="MaterialSnackbarTextViewLightTheme" parent="@style/Widget.MaterialComponents.Snackbar.TextView">
+        <item name="android:textColor">@color/gray_353</item>
+    </style>
+
 </resources>
