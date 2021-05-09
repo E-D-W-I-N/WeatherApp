@@ -1,13 +1,16 @@
 package com.edwin.domain.usecase
 
-import com.edwin.domain.DataResult
 import com.edwin.domain.WeatherRepository
 import com.edwin.domain.model.WeatherDetails
+import com.edwin.domain.util.flowWithResult
+import kotlinx.coroutines.flow.Flow
 
 class GetWeatherDetailsUseCase(private val weatherRepository: WeatherRepository) {
 
-    fun getWeatherDetails(
+    fun invoke(
         latitude: Float,
         longitude: Float
-    ): DataResult<WeatherDetails?> = weatherRepository.getWeatherResponse(latitude, longitude)
+    ): Flow<Result<WeatherDetails?>> = flowWithResult {
+        weatherRepository.getWeatherResponse(latitude, longitude)
+    }
 }

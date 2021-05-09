@@ -3,9 +3,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="blue">#4A90E2</color>
-    <color name="gray_757">#757575</color>
+    <color name="gray_B2B">#B2B2B2</color>
     <color name="gray_666">#666666</color>
     <color name="gray_353">#353535</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
 </resources>
