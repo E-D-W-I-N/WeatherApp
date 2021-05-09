@@ -25,36 +25,30 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     buildFeatures {
         viewBinding true
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
     }
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.google.android.material:material:1.3.0'
-    implementation 'com.google.android.gms:play-services-maps:17.0.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation "androidx.core:core-ktx:$coreKtx_version"
+    implementation "androidx.appcompat:appcompat:$appCompat_version"
+    implementation "com.google.android.material:material:$material_version"
+    implementation "com.google.android.gms:play-services-maps:$playServicesMaps_version"
+    implementation "androidx.constraintlayout:constraintlayout:$constraintlayout_version"
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "androidx.test.ext:junit:$testExtJunit_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espressoCore_version"
 
     // Coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesCore_version"
 
     // Lifecycle
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
 
     // Glide
-    implementation "com.github.bumptech.glide:glide:4.12.0"
+    implementation "com.github.bumptech.glide:glide:$glide_version"
 
     // Navigation Component
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
@@ -68,13 +62,13 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
 
     // Location
-    implementation 'com.google.android.gms:play-services-location:18.0.0'
+    implementation "com.google.android.gms:play-services-location:$playServicesLocation_version"
 
     // LiveData
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.1"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
 
     // Fragment
-    implementation 'androidx.fragment:fragment-ktx:1.3.3'
+    implementation "androidx.fragment:fragment-ktx:$fragmentKtx_version"
 
     // Domain Module
     implementation project(":domain")

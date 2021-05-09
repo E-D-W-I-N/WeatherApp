@@ -6,18 +6,13 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.flowWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
-import com.edwin.domain.DataResult
+import com.edwin.domain.exception.WeatherException
+import com.edwin.domain.model.BriefWeatherInfo
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.WeatherDetailsFragmentBinding
-import com.edwin.weatherapp.util.action
 import com.edwin.weatherapp.util.loadImage
 import com.edwin.weatherapp.util.showSnackbar
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class WeatherDetailsFragment : Fragment(R.layout.weather_details_fragment) {
@@ -29,55 +24,70 @@ class WeatherDetailsFragment : Fragment(R.layout.weather_details_fragment) {
         super.onViewCreated(view, savedInstanceState)
         val binding = WeatherDetailsFragmentBinding.bind(view)
         weatherScreenSetup(binding)
+        binding.retryButton.setOnClickListener {
+            fetchWeatherInfo(binding)
+        }
         setHasOptionsMenu(true)
     }
 
-    private fun weatherScreenSetup(binding: WeatherDetailsFragmentBinding) = with(binding) {
-        val latitude = args.latitude
-        val longitude = args.longitude
-        viewModel.getWeatherDetails(latitude, longitude)
-        lifecycleScope.launch {
-            val flow =
-                viewModel.weatherDetails.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-            flow.collect { result ->
-                when (result) {
-                    is DataResult.Success -> {
-                        progressBar.visibility = View.INVISIBLE
-                        val weatherDetails = result.data
-                        temperature.text = weatherDetails?.temperature.toString()
-                        weatherIcon.loadImage(requireContext(), weatherDetails?.icon)
-                        weatherBrief.text = weatherDetails?.generalInfo
-                        humidity.text = getString(R.string.humidity_value, weatherDetails?.humidity)
-                        wind.text = getString(R.string.wind_value, weatherDetails?.windSpeed)
-                        pressure.text = getString(R.string.pressure_value, weatherDetails?.pressure)
-                        setWeatherImage(weatherDetails?.generalInfo, binding)
-                        weatherDetailsScreen.visibility = View.VISIBLE
-                    }
-                    is DataResult.Error -> {
-                        progressBar.visibility = View.INVISIBLE
-                        textViewError.text = result.errorMessage
-                        textViewError.visibility = View.VISIBLE
-                    }
-                    is DataResult.Loading -> {
-                        progressBar.visibility = View.VISIBLE
-                    }
-                    else -> Unit
-                }
-            }
-        }
+    private fun fetchWeatherInfo(binding: WeatherDetailsFragmentBinding) = with(binding) {
+        textViewError.visibility = View.INVISIBLE
+        retryButton.visibility = View.INVISIBLE
+        progressBar.visibility = View.VISIBLE
+        viewModel.getWeatherDetails(args.latitude, args.longitude)
     }
 
-    private fun setWeatherImage(generalInfo: String?, binding: WeatherDetailsFragmentBinding) {
-        when (generalInfo) {
-            "scattered clouds" -> binding.weatherImage.setImageResource(R.drawable.scattered_clouds)
-            "clear sky" -> binding.weatherImage.setImageResource(R.drawable.clear_sky)
-            "rain" -> binding.weatherImage.setImageResource(R.drawable.rain)
-            "thunderstorm" -> binding.weatherImage.setImageResource(R.drawable.thunderstorm)
-            "few clouds" -> binding.weatherImage.setImageResource(R.drawable.few_clouds)
-            "broken clouds" -> binding.weatherImage.setImageResource(R.drawable.broken_clouds)
-            "shower rain" -> binding.weatherImage.setImageResource(R.drawable.shower_rain)
-            "snow" -> binding.weatherImage.setImageResource(R.drawable.snow)
-            "mist" -> binding.weatherImage.setImageResource(R.drawable.mist)
+    private fun weatherScreenSetup(binding: WeatherDetailsFragmentBinding) = with(binding) {
+        fetchWeatherInfo(binding)
+        viewModel.weatherDetails.observe(viewLifecycleOwner, { result ->
+            result.onSuccess { weatherDetails ->
+                progressBar.visibility = View.INVISIBLE
+                temperature.text = weatherDetails?.temperature.toString()
+                weatherIcon.loadImage(requireContext(), weatherDetails?.icon)
+                weatherBrief.text = weatherDetails?.generalInfo
+                humidity.text = getString(R.string.humidity_value, weatherDetails?.humidity)
+                wind.text = getString(
+                    R.string.wind_value,
+                    weatherDetails?.windDirection?.direction,
+                    weatherDetails?.windSpeed
+                )
+                pressure.text = getString(R.string.pressure_value, weatherDetails?.pressure)
+                setWeatherImage(weatherDetails?.briefWeatherInfo, binding)
+                weatherDetailsScreen.visibility = View.VISIBLE
+            }
+            result.onFailure { exception ->
+                when (exception) {
+                    is WeatherException.HostFailure -> {
+                        progressBar.visibility = View.INVISIBLE
+                        textViewError.text = getString(R.string.host_failure_error_text)
+                        textViewError.visibility = View.VISIBLE
+                        retryButton.visibility = View.VISIBLE
+                    }
+                    is WeatherException.NoWeatherData -> {
+                        progressBar.visibility = View.INVISIBLE
+                        textViewError.text = getString(R.string.no_weather_data_error_text)
+                        textViewError.visibility = View.VISIBLE
+                        retryButton.visibility = View.VISIBLE
+                    }
+                }
+            }
+        })
+    }
+
+    private fun setWeatherImage(
+        briefWeatherInfo: BriefWeatherInfo?,
+        binding: WeatherDetailsFragmentBinding
+    ) {
+        when (briefWeatherInfo) {
+            BriefWeatherInfo.SCATTERED_CLOUDS -> binding.weatherImage.setImageResource(R.drawable.scattered_clouds)
+            BriefWeatherInfo.CLEAR_SKY -> binding.weatherImage.setImageResource(R.drawable.clear_sky)
+            BriefWeatherInfo.RAIN -> binding.weatherImage.setImageResource(R.drawable.rain)
+            BriefWeatherInfo.THUNDERSTORM -> binding.weatherImage.setImageResource(R.drawable.thunderstorm)
+            BriefWeatherInfo.FEW_CLOUDS -> binding.weatherImage.setImageResource(R.drawable.few_clouds)
+            BriefWeatherInfo.BROKEN_CLOUDS -> binding.weatherImage.setImageResource(R.drawable.broken_clouds)
+            BriefWeatherInfo.SHOWER_RAIN -> binding.weatherImage.setImageResource(R.drawable.shower_rain)
+            BriefWeatherInfo.SNOW -> binding.weatherImage.setImageResource(R.drawable.snow)
+            BriefWeatherInfo.MIST -> binding.weatherImage.setImageResource(R.drawable.mist)
             else -> binding.weatherImage.setImageResource(R.drawable.few_clouds)
         }
     }
@@ -90,11 +100,7 @@ class WeatherDetailsFragment : Fragment(R.layout.weather_details_fragment) {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_share -> {
-                showSnackbar(getString(R.string.share_toast_text)) {
-                    action(android.R.string.ok) {
-                        this.dismiss()
-                    }
-                }
+                showSnackbar(getString(R.string.share_toast_text))
                 true
             }
             else -> super.onOptionsItemSelected(item)

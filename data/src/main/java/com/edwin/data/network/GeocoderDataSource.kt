@@ -2,7 +2,7 @@ package com.edwin.data.network
 
 import android.location.Address
 import android.location.Geocoder
-import java.io.IOException
+import com.edwin.domain.exception.MapException
 
 class GeocoderDataSource(private val geocoder: Geocoder) {
 
@@ -12,7 +12,7 @@ class GeocoderDataSource(private val geocoder: Geocoder) {
     ): Address {
         val addresses = geocoder.getFromLocation(latitude, longitude, 1)
         if (addresses.isEmpty() || addresses.first().locality.isNullOrEmpty()) {
-            throw IOException()
+            throw MapException.CityNotFound
         }
         return addresses.first()
     }

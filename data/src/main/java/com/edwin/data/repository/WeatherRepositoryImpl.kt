@@ -7,9 +7,12 @@ import com.edwin.data.device.GetLocationDataSource
 import com.edwin.data.entity.util.toDomain
 import com.edwin.data.network.GeocoderDataSource
 import com.edwin.data.network.WeatherApiDataSource
-import com.edwin.domain.DataResult
 import com.edwin.domain.WeatherRepository
+import com.edwin.domain.exception.MapException
+import com.edwin.domain.exception.WeatherException
 import com.edwin.domain.model.WeatherDetails
+import java.io.IOException
+import java.net.UnknownHostException
 
 class WeatherRepositoryImpl(
     private val weatherApiDataSource: WeatherApiDataSource,
@@ -23,38 +26,35 @@ class WeatherRepositoryImpl(
     override fun getWeatherResponse(
         latitude: Float,
         longitude: Float
-    ): DataResult<WeatherDetails?> {
+    ): WeatherDetails? {
         return try {
-            val weatherDetailsCall =
-                weatherApiDataSource.getWeatherResponse(latitude, longitude, apiKey, units)
-            DataResult.Success(
-                weatherDetailsCall.execute().body()?.toDomain()
-            )
-        } catch (e: Exception) {
-            DataResult.Error("Can't reach server. Check your Internet connection")
+            val weatherDetailsResponse = weatherApiDataSource.getWeatherResponse(
+                latitude,
+                longitude,
+                apiKey,
+                units
+            ).execute()
+            val weatherBody = weatherDetailsResponse.body() ?: throw WeatherException.NoWeatherData
+            weatherBody.toDomain()
+        } catch (e: UnknownHostException) {
+            throw WeatherException.HostFailure
         }
     }
 
-    override fun getFusedLocation(): DataResult<Location> {
-        return try {
-            DataResult.Success(
-                getLocationDataSource.getFusedLocation()
-            )
-        } catch (e: Exception) {
-            DataResult.Error("Can't get your current location")
-        }
-    }
+    override fun getFusedLocation(): Location =
+        getLocationDataSource.getFusedLocation() ?: throw MapException.NoLastLocation
 
     override fun getAddress(
         latitude: Double,
         longitude: Double
-    ): DataResult<Address> {
+    ): Address {
         return try {
-            DataResult.Success(
-                geocoderDataSource.getAddressFromGeocoder(latitude, longitude)
-            )
+            geocoderDataSource.getAddressFromGeocoder(latitude, longitude)
         } catch (e: Exception) {
-            DataResult.Error("No city here")
+            when (e) {
+                is IOException -> throw MapException.GeocoderFailed
+                else -> throw MapException.CityNotFound
+            }
         }
     }
 }
