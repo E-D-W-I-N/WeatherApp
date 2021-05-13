@@ -1,11 +1,12 @@
 package com.edwin.data.network
 
+import com.edwin.data.BuildConfig
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private const val BASE_URL = "https://api.openweathermap.org/data/2.5/"
+    private const val BASE_URL = BuildConfig.API_URL
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()

@@ -1,4 +1,4 @@
-package com.edwin.weatherapp.util
+package com.edwin.weatherapp.extentions
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

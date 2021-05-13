@@ -20,9 +20,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            debuggable true
+            buildConfigField "String", "ICON_URL_START", "\"https://openweathermap.org/img/wn/\""
+            buildConfigField "String", "ICON_URL_END", "\"@2x.png\""
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "ICON_URL_START", "\"https://openweathermap.org/img/wn/\""
+            buildConfigField "String", "ICON_URL_END", "\"@2x.png\""
         }
     }
 

@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edwin.domain.usecase.GetAddressFromGeocoderUseCase
 import com.edwin.domain.usecase.GetFusedLocationUseCase
-import com.edwin.weatherapp.util.asLiveData
+import com.edwin.weatherapp.extentions.asLiveData
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 
