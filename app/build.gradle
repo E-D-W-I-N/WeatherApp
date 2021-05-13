@@ -33,38 +33,35 @@ android {
 
 dependencies {
     implementation "androidx.core:core-ktx:$coreKtx_version"
-    implementation "androidx.appcompat:appcompat:$appCompat_version"
-    implementation "com.google.android.material:material:$material_version"
-    implementation "com.google.android.gms:play-services-maps:$playServicesMaps_version"
-    implementation "androidx.constraintlayout:constraintlayout:$constraintlayout_version"
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$testExtJunit_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressoCore_version"
+    implementation "androidx.appcompat:appcompat:1.2.0"
+    implementation "com.google.android.material:material:1.3.0"
+    implementation "com.google.android.gms:play-services-maps:17.0.1"
+    implementation "androidx.constraintlayout:constraintlayout:2.0.4"
 
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesCore_version"
-
-    // Lifecycle
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
-
-    // Glide
-    implementation "com.github.bumptech.glide:glide:$glide_version"
 
     // Navigation Component
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
-    // Koin
-    implementation "io.insert-koin:koin-android:$koin_version"
-
     // Location
     implementation "com.google.android.gms:play-services-location:$playServicesLocation_version"
 
+    // Glide
+    implementation "com.github.bumptech.glide:glide:4.12.0"
+
+    // Koin
+    implementation "io.insert-koin:koin-android:3.0.1"
+
     // LiveData
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.1"
 
     // Fragment
-    implementation "androidx.fragment:fragment-ktx:$fragmentKtx_version"
+    implementation "androidx.fragment:fragment-ktx:1.3.3"
 
     // Domain Module
     implementation project(":domain")
