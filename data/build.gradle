@@ -32,12 +32,12 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$testExtJunit_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressoCore_version"
 
-    // Retrofit + GSON
-    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-
     // Location
     implementation "com.google.android.gms:play-services-location:$playServicesLocation_version"
+
+    // Retrofit + GSON
+    implementation "com.squareup.retrofit2:retrofit:3.0.1"
+    implementation "com.squareup.retrofit2:converter-gson:3.0.1"
 
     // Domain Module
     implementation project(":domain")
