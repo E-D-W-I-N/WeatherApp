@@ -57,10 +57,6 @@ dependencies {
     // Koin
     implementation "io.insert-koin:koin-android:$koin_version"
 
-    // Retrofit + GSON
-    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-
     // Location
     implementation "com.google.android.gms:play-services-location:$playServicesLocation_version"
 
