@@ -1,4 +1,4 @@
-package com.edwin.weatherapp.util
+package com.edwin.weatherapp.extentions
 
 import android.view.View
 import androidx.annotation.StringRes

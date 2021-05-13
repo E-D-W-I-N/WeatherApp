@@ -16,7 +16,7 @@ import androidx.navigation.fragment.findNavController
 import com.edwin.domain.exception.MapException
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.MapFragmentBinding
-import com.edwin.weatherapp.util.*
+import com.edwin.weatherapp.extentions.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
