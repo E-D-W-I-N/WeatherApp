@@ -11,8 +11,8 @@ import com.edwin.domain.exception.WeatherException
 import com.edwin.domain.model.BriefWeatherInfo
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.WeatherDetailsFragmentBinding
-import com.edwin.weatherapp.util.loadImage
-import com.edwin.weatherapp.util.showSnackbar
+import com.edwin.weatherapp.extentions.loadImage
+import com.edwin.weatherapp.extentions.showSnackbar
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class WeatherDetailsFragment : Fragment(R.layout.weather_details_fragment) {
