@@ -4,15 +4,15 @@ import android.location.Address
 import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.edwin.domain.usecase.GetAddressFromGeocoderUseCase
-import com.edwin.domain.usecase.GetFusedLocationUseCase
+import com.edwin.domain.usecase.UseCase
+import com.edwin.domain.usecase.map.GetAddressFromGeocoderUseCase.Params
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class MapViewModel(
-    private val getFusedLocationUseCase: GetFusedLocationUseCase,
-    private val getAddressFromGeocoderUseCase: GetAddressFromGeocoderUseCase
+    private val getFusedLocationUseCase: UseCase<Location, Unit>,
+    private val getAddressFromGeocoderUseCase: UseCase<Address, Params>
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Default)
@@ -23,7 +23,7 @@ class MapViewModel(
 
     fun getFusedLocation() = viewModelScope.launch {
         _uiState.value = MapUiState.Loading
-        val location = getFusedLocationUseCase.invoke().single()
+        val location = getFusedLocationUseCase(Unit).single()
         location.fold(
             onSuccess = { _uiState.value = MapUiState.CurrentLocationLoaded(it) },
             onFailure = {
@@ -35,7 +35,7 @@ class MapViewModel(
 
     fun getAddress(latitude: Double, longitude: Double) = viewModelScope.launch {
         _uiState.value = MapUiState.Loading
-        val address = getAddressFromGeocoderUseCase.invoke(latitude, longitude).single()
+        val address = getAddressFromGeocoderUseCase(Params(latitude, longitude)).single()
         address.fold(
             onSuccess = { _uiState.value = MapUiState.AddressLoaded(it) },
             onFailure = {
