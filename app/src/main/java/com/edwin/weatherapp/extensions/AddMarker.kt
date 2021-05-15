@@ -1,4 +1,4 @@
-package com.edwin.weatherapp.extentions
+package com.edwin.weatherapp.extensions
 
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker

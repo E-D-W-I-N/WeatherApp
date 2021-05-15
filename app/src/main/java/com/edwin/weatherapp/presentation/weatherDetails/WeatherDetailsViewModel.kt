@@ -1,12 +1,12 @@
 package com.edwin.weatherapp.presentation.weatherDetails
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edwin.domain.model.WeatherDetails
 import com.edwin.domain.usecase.GetWeatherDetailsUseCase
-import com.edwin.weatherapp.extentions.asLiveData
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 
@@ -14,10 +14,22 @@ class WeatherDetailsViewModel(
     private val getWeatherDetailsUseCase: GetWeatherDetailsUseCase
 ) : ViewModel() {
 
-    private val _weatherDetails = MutableLiveData<Result<WeatherDetails?>>()
-    val weatherDetails: LiveData<Result<WeatherDetails?>> = _weatherDetails.asLiveData()
+    private val _uiState = MutableStateFlow<WeatherUiState>(WeatherUiState.Default)
+    val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
 
     fun getWeatherDetails(latitude: Float, longitude: Float) = viewModelScope.launch {
-        _weatherDetails.value = getWeatherDetailsUseCase.invoke(latitude, longitude).single()
+        _uiState.value = WeatherUiState.Loading
+        val weatherDetails = getWeatherDetailsUseCase.invoke(latitude, longitude).single()
+        weatherDetails.fold(
+            onSuccess = { _uiState.value = WeatherUiState.WeatherDetailsLoaded(it) },
+            onFailure = { _uiState.value = WeatherUiState.Error(it) }
+        )
+    }
+
+    sealed class WeatherUiState {
+        object Loading : WeatherUiState()
+        object Default : WeatherUiState()
+        data class Error(val throwable: Throwable) : WeatherUiState()
+        data class WeatherDetailsLoaded(val weatherDetails: WeatherDetails?) : WeatherUiState()
     }
 }
