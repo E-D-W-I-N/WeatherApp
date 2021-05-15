@@ -16,6 +16,7 @@
     <string name="search_icon">Search Icon</string>
     <string name="search_toast_text">Search will be implemented soon</string>
     <string name="share_toast_text">Share will be implemented soon</string>
+    <string name="action_dismiss">Dismiss</string>
     <string name="action_retry">Retry</string>
     <string name="share">Share</string>
     <string name="marker_title">You are here</string>
@@ -24,4 +25,5 @@
     <string name="check_connection_error_text">Can\'t get city location. Check your Internet connection</string>
     <string name="host_failure_error_text">Can\'t reach server. Check your Internet connection</string>
     <string name="no_weather_data_error_text">There is no weather data for this place</string>
+    <string name="banner_image">Banner Image</string>
 </resources>
