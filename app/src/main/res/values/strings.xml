@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">WeatherApp</string>
-    <string name="permission_granted">Permission granted</string>
-    <string name="permission_denied">Permission denied</string>
     <string name="permission_dialog_message">Permission to access your location is required to use this function</string>
     <string name="permission_dialog_title">Permission required</string>
     <string name="weather_icon">Weather Icon</string>

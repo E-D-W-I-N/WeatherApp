@@ -12,15 +12,20 @@ import androidx.activity.result.contract.ActivityResultContracts.RequestPermissi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.edwin.domain.exception.MapException
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.MapFragmentBinding
-import com.edwin.weatherapp.extentions.*
+import com.edwin.weatherapp.extensions.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
@@ -39,22 +44,60 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            //Если разрешение выдано показываем Snackbar и выполняем действие
-            showSnackbar(getString(R.string.permission_granted))
-            moveCameraToCurrentLocation()
-        } else {
-            showSnackbar(getString(R.string.permission_denied))
+            viewModel.getFusedLocation()
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = MapFragmentBinding.bind(view)
+        setupObservers()
         binding.apply {
             mapView.onCreate(savedInstanceState)
             mapView.getMapAsync(this@MapFragment)
         }
         setHasOptionsMenu(true)
+    }
+
+    private fun setupObservers() {
+        val uiStateFlow = viewModel.uiState.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+        uiStateFlow.onEach { state ->
+            when (state) {
+                is MapViewModel.MapUiState.Loading -> binding.progressBar.visibility = View.VISIBLE
+                is MapViewModel.MapUiState.CurrentLocationLoaded -> {
+                    binding.progressBar.visibility = View.INVISIBLE
+                    val latLng = LatLng(state.location.latitude, state.location.longitude)
+                    moveCameraToCurrentLocation(latLng)
+                }
+                is MapViewModel.MapUiState.AddressLoaded -> {
+                    binding.progressBar.visibility = View.INVISIBLE
+                    setupShowWeatherWindow(state.address)
+                }
+                is MapViewModel.MapUiState.Error -> binding.progressBar.visibility = View.INVISIBLE
+                else -> Unit
+            }
+        }.launchIn(viewLifecycleOwner.lifecycleScope)
+
+        val eventsFlow = viewModel.eventsFlow.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+        eventsFlow.onEach { event ->
+            when (event) {
+                is MapViewModel.ActionState.ShowError -> {
+                    when (event.throwable) {
+                        is MapException.GeocoderFailed -> showSnackbar(
+                            getString(R.string.check_connection_error_text)
+                        )
+                        is MapException.CityNotFound -> showSnackbar(
+                            getString(R.string.no_city_error_text)
+                        )
+                        is MapException.NoLastLocation -> {
+                            showSnackbar(getString(R.string.current_location_error_text)) {
+                                action(R.string.action_retry) { viewModel.getFusedLocation() }
+                            }
+                        }
+                    }
+                }
+            }
+        }.launchIn(viewLifecycleOwner.lifecycleScope)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -65,47 +108,30 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
             map.addMarker {
                 position(latLng)
             }
-            // Если текущий зум камеры выше стандартного, то не уменьшаем его
             val cameraPosition = if (googleMap.cameraPosition.zoom > ON_CLICK_MAP_ZOOM) {
                 CameraUpdateFactory.newLatLng(latLng)
             } else {
                 CameraUpdateFactory.newLatLngZoom(latLng, ON_CLICK_MAP_ZOOM)
             }
             map.animateCamera(cameraPosition)
-            // Делаем progressBar видимым и обновляем Address во ViewModel
-            binding.progressBar.visibility = View.VISIBLE
             viewModel.getAddress(latLng.latitude, latLng.longitude)
         }
-        viewModel.address.observe(viewLifecycleOwner, { result ->
-            // При успешном получении Address убираем progressBar и показываем окно
-            result.onSuccess { address ->
-                binding.progressBar.visibility = View.INVISIBLE
-                setupShowWeatherWindow(address)
-            }
-            // При неудачном получении Address убираем progressBar и обрабатываем ошибки
-            result.onFailure { exception ->
-                binding.progressBar.visibility = View.INVISIBLE
-                when (exception) {
-                    is MapException.GeocoderFailed -> showSnackbar(
-                        getString(R.string.check_connection_error_text)
-                    )
-                    is MapException.CityNotFound -> showSnackbar(
-                        getString(R.string.no_city_error_text)
-                    )
-                }
-            }
-        })
+    }
+
+    private fun moveCameraToCurrentLocation(latLng: LatLng) {
+        val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_START_MAP_ZOOM)
+        map.animateCamera(cameraPosition)
+        map.addMarker {
+            position(latLng)
+            title(getString(R.string.marker_title))
+            icon(requireContext(), R.drawable.ic_my_location)
+        }
     }
 
     private fun setupShowWeatherWindow(address: Address) = with(binding) {
         cityName.text = address.locality
         cityLatlng.text = getString(R.string.cityLatlng, address.latitude, address.longitude)
-        // По клику на кнопку закрытия окна скрываем его с анимацией
-        closeWindowButton.setOnClickListener {
-            showWeatherWindow.animateOut()
-        }
-        /* По клику на кнопку "Show weather" открываем WeatherDetailsFragment.
-        Через SafeArgs передаем в него название города и его координаты */
+        closeWindowButton.setOnClickListener { showWeatherWindow.animateOut() }
         showWeatherButton.setOnClickListener {
             val action = MapFragmentDirections.actionMapFragmentToWeatherDetailsFragment(
                 address.locality, address.latitude.toFloat(), address.longitude.toFloat()
@@ -121,48 +147,13 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                 requireContext(),
                 LOCATION_PERMISSION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                moveCameraToCurrentLocation()
+                viewModel.getFusedLocation()
             }
-            // Если пользователь отказался давать разрешение, то пытаемся убедить его :)
             shouldShowRequestPermissionRationale(LOCATION_PERMISSION) -> {
                 showDialog()
             }
             else -> requestPermissionLauncher.launch(LOCATION_PERMISSION)
         }
-    }
-
-    private fun moveCameraToCurrentLocation() {
-        binding.progressBar.visibility = View.VISIBLE
-        // Обновляем значение LiveData во ViewModel
-        viewModel.getFusedLocation()
-        viewModel.fusedLocation.observe(viewLifecycleOwner, { result ->
-            // Если локация пользователя получена успешно, то приближаем камеру и ставим маркер
-            result.onSuccess { location ->
-                binding.progressBar.visibility = View.INVISIBLE
-                val latLng = LatLng(location.latitude, location.longitude)
-                val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_START_MAP_ZOOM)
-                map.animateCamera(cameraPosition)
-                map.addMarker {
-                    position(latLng)
-                    title(getString(R.string.marker_title))
-                    icon(requireContext(), R.drawable.ic_my_location)
-                }
-            }
-            // Если при получении локации возникли исключения, то обрабатываем их
-            result.onFailure { exception ->
-                binding.progressBar.visibility = View.INVISIBLE
-                when (exception) {
-                    is MapException.NoLastLocation -> {
-                        showSnackbar(getString(R.string.current_location_error_text)) {
-                            action(R.string.action_retry) {
-                                binding.progressBar.visibility = View.VISIBLE
-                                viewModel.getFusedLocation()
-                            }
-                        }
-                    }
-                }
-            }
-        })
     }
 
     private fun showDialog() {
@@ -183,7 +174,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            // При клике на иконку поиска в меню показываем Snackbar
             R.id.action_search -> {
                 showSnackbar(getString(R.string.search_toast_text))
                 true

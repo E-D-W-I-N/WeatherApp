@@ -1,4 +1,4 @@
-package com.edwin.weatherapp.extentions
+package com.edwin.weatherapp.extensions
 
 import android.content.Context
 import android.widget.ImageView
