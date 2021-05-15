@@ -3,7 +3,8 @@ package com.edwin.weatherapp.presentation.weatherDetails
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edwin.domain.model.WeatherDetails
-import com.edwin.domain.usecase.GetWeatherDetailsUseCase
+import com.edwin.domain.usecase.UseCase
+import com.edwin.domain.usecase.weather.GetWeatherDetailsUseCase.Params
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 
 class WeatherDetailsViewModel(
-    private val getWeatherDetailsUseCase: GetWeatherDetailsUseCase
+    private val getWeatherDetailsUseCase: UseCase<WeatherDetails?, Params>
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<WeatherUiState>(WeatherUiState.Default)
@@ -19,7 +20,7 @@ class WeatherDetailsViewModel(
 
     fun getWeatherDetails(latitude: Float, longitude: Float) = viewModelScope.launch {
         _uiState.value = WeatherUiState.Loading
-        val weatherDetails = getWeatherDetailsUseCase.invoke(latitude, longitude).single()
+        val weatherDetails = getWeatherDetailsUseCase(Params(latitude, longitude)).single()
         weatherDetails.fold(
             onSuccess = { _uiState.value = WeatherUiState.WeatherDetailsLoaded(it) },
             onFailure = { _uiState.value = WeatherUiState.Error(it) }
