@@ -65,15 +65,15 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
             when (state) {
                 is MapViewModel.MapUiState.Loading -> binding.progressBar.visibility = View.VISIBLE
                 is MapViewModel.MapUiState.CurrentLocationLoaded -> {
-                    binding.progressBar.visibility = View.INVISIBLE
+                    binding.progressBar.visibility = View.GONE
                     val latLng = LatLng(state.location.latitude, state.location.longitude)
                     moveCameraToCurrentLocation(latLng)
                 }
                 is MapViewModel.MapUiState.AddressLoaded -> {
-                    binding.progressBar.visibility = View.INVISIBLE
+                    binding.progressBar.visibility = View.GONE
                     setupShowWeatherWindow(state.address)
                 }
-                is MapViewModel.MapUiState.Error -> binding.progressBar.visibility = View.INVISIBLE
+                is MapViewModel.MapUiState.Error -> binding.progressBar.visibility = View.GONE
                 else -> Unit
             }
         }.launchIn(viewLifecycleOwner.lifecycleScope)
@@ -90,9 +90,14 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                             getString(R.string.no_city_error_text)
                         )
                         is MapException.NoLastLocation -> {
-                            showSnackbar(getString(R.string.current_location_error_text)) {
-                                action(R.string.action_retry) { viewModel.getFusedLocation() }
-                            }
+                            binding.banner.showBanner(
+                                R.string.current_location_error_text,
+                                R.drawable.ic_location_off,
+                                R.string.action_dismiss,
+                                R.string.action_retry,
+                                { binding.banner.dismiss() },
+                                { viewModel.getFusedLocation() }
+                            )
                         }
                     }
                 }
@@ -102,7 +107,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-        checkPermissions()
         map.setOnMapClickListener { latLng ->
             map.clear()
             map.addMarker {
@@ -180,6 +184,11 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        checkPermissions()
     }
 
     override fun onStart() {
