@@ -1,4 +1,4 @@
-package com.edwin.weatherapp.extentions
+package com.edwin.weatherapp.extensions
 
 import android.view.View
 import androidx.cardview.widget.CardView
