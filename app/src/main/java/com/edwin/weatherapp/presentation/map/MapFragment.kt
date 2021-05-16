@@ -4,10 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Address
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
@@ -16,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import by.kirich1409.viewbindingdelegate.viewBinding
 import com.edwin.domain.exception.MapException
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.MapFragmentBinding
@@ -31,7 +29,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     private val viewModel: MapViewModel by viewModel()
-    private lateinit var binding: MapFragmentBinding
+    private val binding by viewBinding(MapFragmentBinding::bind)
     private lateinit var map: GoogleMap
 
     companion object {
@@ -50,8 +48,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding = MapFragmentBinding.bind(view)
-        setupObservers()
         binding.apply {
             mapView.onCreate(savedInstanceState)
             mapView.getMapAsync(this@MapFragment)
@@ -107,6 +103,8 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+        setupObservers()
+        checkPermissions()
         map.setOnMapClickListener { latLng ->
             map.clear()
             map.addMarker {
@@ -186,11 +184,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        checkPermissions()
-    }
-
     override fun onStart() {
         super.onStart()
         binding.mapView.onStart()
@@ -216,9 +209,9 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         binding.mapView.onLowMemory()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        binding.mapView.onSaveInstanceState(outState)
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding.mapView.onDestroy()
     }
 
 }
