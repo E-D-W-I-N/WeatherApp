@@ -34,8 +34,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     companion object {
         private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION
-        private const val ON_START_MAP_ZOOM = 4F
-        private const val ON_CLICK_MAP_ZOOM = 8F
+        private const val MAP_ZOOM = 8F
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -63,7 +62,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                 is MapViewModel.MapUiState.CurrentLocationLoaded -> {
                     binding.progressBar.visibility = View.GONE
                     val latLng = LatLng(state.location.latitude, state.location.longitude)
-                    moveCameraToCurrentLocation(latLng)
+                    moveCameraToLocation(latLng)
                 }
                 is MapViewModel.MapUiState.AddressLoaded -> {
                     binding.progressBar.visibility = View.GONE
@@ -92,7 +91,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                                 R.string.action_dismiss,
                                 R.string.action_retry,
                                 { binding.banner.dismiss() },
-                                { viewModel.getFusedLocation() }
+                                { binding.banner.dismiss().also { viewModel.getFusedLocation() } }
                             )
                         }
                     }
@@ -104,33 +103,32 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         setupObservers()
-        checkPermissions()
+        if (viewModel.isLocationNotChecked) {
+            checkPermissions()
+            viewModel.isLocationNotChecked = false
+        }
         map.setOnMapClickListener { latLng ->
-            map.clear()
-            map.addMarker {
-                position(latLng)
-            }
-            val cameraPosition = if (googleMap.cameraPosition.zoom > ON_CLICK_MAP_ZOOM) {
-                CameraUpdateFactory.newLatLng(latLng)
-            } else {
-                CameraUpdateFactory.newLatLngZoom(latLng, ON_CLICK_MAP_ZOOM)
-            }
-            map.animateCamera(cameraPosition)
+            moveCameraToLocation(latLng)
             viewModel.getAddress(latLng.latitude, latLng.longitude)
         }
     }
 
-    private fun moveCameraToCurrentLocation(latLng: LatLng) {
-        val cameraPosition = CameraUpdateFactory.newLatLngZoom(latLng, ON_START_MAP_ZOOM)
-        map.animateCamera(cameraPosition)
+    private fun moveCameraToLocation(latLng: LatLng) {
+        val cameraPosition = if (map.cameraPosition.zoom > MAP_ZOOM) {
+            CameraUpdateFactory.newLatLng(latLng)
+        } else {
+            CameraUpdateFactory.newLatLngZoom(latLng, MAP_ZOOM)
+        }
+        map.clear()
         map.addMarker {
             position(latLng)
-            title(getString(R.string.marker_title))
-            icon(requireContext(), R.drawable.ic_my_location)
         }
+        map.animateCamera(cameraPosition)
     }
 
     private fun setupShowWeatherWindow(address: Address) = with(binding) {
+        val latLng = LatLng(address.latitude, address.longitude)
+        moveCameraToLocation(latLng)
         cityName.text = address.locality
         cityLatlng.text = getString(R.string.cityLatlng, address.latitude, address.longitude)
         closeWindowButton.setOnClickListener { showWeatherWindow.animateOut() }
