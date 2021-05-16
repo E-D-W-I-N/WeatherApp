@@ -3,10 +3,15 @@ package com.edwin.weatherapp.extensions
 import android.view.View
 import androidx.cardview.widget.CardView
 
-fun CardView.animateIn() {
-    val startPosition = 400f
-    val endPosition = 0f
-    val duration = 2000L
+const val positionHidden = 400f
+const val positionShown = 0f
+const val defaultDuration = 2000L
+
+fun CardView.animateIn(
+    startPosition: Float = positionHidden,
+    endPosition: Float = positionShown,
+    duration: Long = defaultDuration
+) {
     translationY = startPosition
     visibility = View.VISIBLE
     animate()
@@ -15,10 +20,11 @@ fun CardView.animateIn() {
         .start()
 }
 
-fun CardView.animateOut() {
-    val startPosition = 0f
-    val endPosition = 400f
-    val duration = 2000L
+fun CardView.animateOut(
+    startPosition: Float = positionShown,
+    endPosition: Float = positionHidden,
+    duration: Long = defaultDuration
+) {
     translationY = startPosition
     animate()
         .translationY(endPosition)
