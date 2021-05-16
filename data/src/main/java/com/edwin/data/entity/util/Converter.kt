@@ -8,26 +8,32 @@ import kotlin.math.roundToInt
 
 fun WeatherDTO.toDomain(): WeatherDetails {
     return WeatherDetails(
-        main["temp"]?.roundToInt() ?: 0,
+        main[WeatherParameters.Temp.toLowerCase()]?.roundToInt() ?: 0,
         weather.first().icon,
         toBriefWeatherInfo(weather.first().description),
         weather.first().description,
-        main["humidity"]?.toInt() ?: 0,
-        wind["speed"] ?: 0.0,
-        wind["deg"]?.toInt()?.let { WindDirection.degreeToDirection(it) } ?: WindDirection.NORTH,
-        main["pressure"] ?: 0.0
+        main[WeatherParameters.Humidity.toLowerCase()]?.toInt() ?: 0,
+        wind[WeatherParameters.Speed.toLowerCase()] ?: 0.0,
+        wind[WeatherParameters.Deg.toLowerCase()]?.toInt()
+            ?.let { WindDirection.degreeToDirection(it) } ?: WindDirection.NORTH,
+        main[WeatherParameters.Pressure.toLowerCase()] ?: 0.0
     )
 }
 
-private fun toBriefWeatherInfo(description: String) = when (description) {
-    "scattered clouds" -> BriefWeatherInfo.SCATTERED_CLOUDS
-    "clear sky" -> BriefWeatherInfo.CLEAR_SKY
-    "rain" -> BriefWeatherInfo.RAIN
-    "thunderstorm" -> BriefWeatherInfo.THUNDERSTORM
-    "few clouds" -> BriefWeatherInfo.FEW_CLOUDS
-    "broken clouds" -> BriefWeatherInfo.BROKEN_CLOUDS
-    "shower rain" -> BriefWeatherInfo.SHOWER_RAIN
-    "snow" -> BriefWeatherInfo.SNOW
-    "mist" -> BriefWeatherInfo.MIST
-    else -> BriefWeatherInfo.DEFAULT
+private val String.asEnumValueName: String
+    get() {
+        return this.replace(' ', '_').uppercase()
+    }
+
+inline fun <reified T : Enum<T>> valueOf(type: String, default: T): T {
+    return try {
+        java.lang.Enum.valueOf(T::class.java, type)
+    } catch (e: IllegalArgumentException) {
+        default
+    }
 }
+
+private fun toBriefWeatherInfo(description: String) = valueOf(
+    description.asEnumValueName,
+    BriefWeatherInfo.DEFAULT
+)
