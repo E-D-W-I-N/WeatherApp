@@ -10,6 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
+import by.kirich1409.viewbindingdelegate.viewBinding
 import com.edwin.domain.exception.WeatherException
 import com.edwin.domain.model.BriefWeatherInfo
 import com.edwin.domain.model.WeatherDetails
@@ -25,11 +26,10 @@ class WeatherDetailsFragment : Fragment(R.layout.weather_details_fragment) {
 
     private val viewModel: WeatherDetailsViewModel by viewModel()
     private val args: WeatherDetailsFragmentArgs by navArgs()
-    private lateinit var binding: WeatherDetailsFragmentBinding
+    private val binding by viewBinding(WeatherDetailsFragmentBinding::bind)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding = WeatherDetailsFragmentBinding.bind(view)
         handleUiStates()
         binding.retryButton.setOnClickListener {
             viewModel.getWeatherDetails(args.latitude, args.longitude)

@@ -62,6 +62,9 @@ dependencies {
     // Glide
     implementation "com.github.bumptech.glide:glide:4.12.0"
 
+    // ViewBindingDelegate
+    implementation 'com.github.kirich1409:viewbindingpropertydelegate-noreflection:1.4.6'
+
     // Koin
     implementation "io.insert-koin:koin-android:3.0.1"
 
