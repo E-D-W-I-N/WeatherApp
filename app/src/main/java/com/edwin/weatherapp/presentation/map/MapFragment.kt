@@ -31,10 +31,12 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     private val viewModel: MapViewModel by viewModel()
     private val binding by viewBinding(MapFragmentBinding::bind)
     private lateinit var map: GoogleMap
+    private var isLocationNotChecked = true
 
     companion object {
         private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION
         private const val MAP_ZOOM = 8F
+        private const val IS_LOCATION_NOT_CHECKED = "isLocationNotChecked"
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -47,6 +49,10 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        savedInstanceState?.let {
+            isLocationNotChecked = it.getBoolean(IS_LOCATION_NOT_CHECKED)
+        }
+
         binding.apply {
             mapView.onCreate(savedInstanceState)
             mapView.getMapAsync(this@MapFragment)
@@ -86,12 +92,14 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                         )
                         is MapException.NoLastLocation -> {
                             binding.banner.showBanner(
-                                R.string.current_location_error_text,
-                                R.drawable.ic_location_off,
-                                R.string.action_dismiss,
-                                R.string.action_retry,
-                                { binding.banner.dismiss() },
-                                { binding.banner.dismiss().also { viewModel.getFusedLocation() } }
+                                message = R.string.current_location_error_text,
+                                icon = R.drawable.ic_location_off,
+                                leftBtnText = R.string.action_dismiss,
+                                rightBtnText = R.string.action_retry,
+                                leftButtonAction = { binding.banner.dismiss() },
+                                rightButtonAction = {
+                                    binding.banner.dismiss().also { viewModel.getFusedLocation() }
+                                }
                             )
                         }
                     }
@@ -103,9 +111,9 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         setupObservers()
-        if (viewModel.isLocationNotChecked) {
+        if (isLocationNotChecked) {
             checkPermissions()
-            viewModel.isLocationNotChecked = false
+            isLocationNotChecked = false
         }
         map.setOnMapClickListener { latLng ->
             moveCameraToLocation(latLng)
@@ -180,6 +188,11 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(IS_LOCATION_NOT_CHECKED, isLocationNotChecked)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onStart() {
