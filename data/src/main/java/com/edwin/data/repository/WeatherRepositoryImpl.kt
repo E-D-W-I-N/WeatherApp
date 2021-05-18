@@ -21,7 +21,7 @@ class WeatherRepositoryImpl(
 ) : WeatherRepository {
 
     private val apiKey = BuildConfig.OPEN_WEATHER_MAP_API_KEY
-    private val units = "metric"
+    private val units = BuildConfig.UNITS
 
     override fun getWeatherResponse(
         latitude: Float,
