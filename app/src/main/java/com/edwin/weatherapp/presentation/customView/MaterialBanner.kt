@@ -21,37 +21,29 @@ class MaterialBanner @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr) {
 
-    private var _contentText: String? = null
-    private var _leftButtonText: String? = null
-    private var _rightButtonText: String? = null
-    private var _iconDrawableRes: Drawable? = null
-    private var binding: MaterialBannerBinding
+    private val binding: MaterialBannerBinding
 
-    var contentText: String?
-        get() = _contentText
+    var contentText: String? = null
         set(value) {
-            _contentText = value
+            field = value
             binding.contentTextView.text = value
         }
 
-    var leftButtonText: String?
-        get() = _leftButtonText
+    var leftButtonText: String? = null
         set(value) {
-            _leftButtonText = value
+            field = value
             binding.leftButton.text = value
         }
 
-    var rightButtonText: String?
-        get() = _rightButtonText
+    var rightButtonText: String? = null
         set(value) {
-            _rightButtonText = value
+            field = value
             binding.rightButton.text = value
         }
 
-    var iconDrawableRes: Drawable?
-        get() = _iconDrawableRes
+    var iconDrawableRes: Drawable? = null
         set(value) {
-            _iconDrawableRes = value
+            field = value
             binding.contentIconView.setImageDrawable(value)
             binding.contentIconView.visibility = View.VISIBLE
         }
@@ -59,7 +51,10 @@ class MaterialBanner @JvmOverloads constructor(
     init {
         val view = inflate(context, R.layout.material_banner, this)
         binding = MaterialBannerBinding.bind(view)
+        takeValuesFromAttr(attrs, view)
+    }
 
+    private fun takeValuesFromAttr(attrs: AttributeSet?, view: View) = with(binding) {
         val typedArray = context.obtainStyledAttributes(
             attrs, R.styleable.MaterialBanner, 0, 0
         )
@@ -80,27 +75,28 @@ class MaterialBanner @JvmOverloads constructor(
             R.styleable.MaterialBanner_icon
         )
 
-        binding.bannerLayout.setBackgroundColor(
+        bannerLayout.setBackgroundColor(
             typedArray.getColor(
                 R.styleable.MaterialBanner_bannerBackgroundColor,
                 MaterialColors.getColor(view, R.attr.colorPrimary)
             )
         )
 
-        binding.contentTextView.setTextColor(
+        contentTextView.setTextColor(
             typedArray.getColor(
                 R.styleable.MaterialBanner_contentTextColor,
                 ContextCompat.getColor(context, R.color.blue)
             )
         )
 
-        binding.leftButton.setTextColor(
+        leftButton.setTextColor(
             typedArray.getColor(
                 R.styleable.MaterialBanner_buttonsTextColor,
                 ContextCompat.getColor(context, R.color.blue)
             )
         )
-        binding.rightButton.setTextColor(
+
+        rightButton.setTextColor(
             typedArray.getColor(
                 R.styleable.MaterialBanner_buttonsTextColor,
                 ContextCompat.getColor(context, R.color.blue)
@@ -109,7 +105,6 @@ class MaterialBanner @JvmOverloads constructor(
 
         typedArray.recycle()
     }
-
 
     fun showBanner(
         @StringRes message: Int?,
@@ -123,12 +118,11 @@ class MaterialBanner @JvmOverloads constructor(
         iconDrawableRes = icon?.let { ContextCompat.getDrawable(context, it) }
         leftButtonText = leftBtnText?.let { context.getString(it) }
         rightButtonText = rightBtnText?.let { context.getString(it) }
-        this.setLeftButtonAction { leftButtonAction() }
-        this.setRightButtonAction { rightButtonAction() }
-        this.expand()
-    }
+        setLeftButtonAction { leftButtonAction() }
+        setRightButtonAction { rightButtonAction() }
+        show()
 
-    fun dismiss() = this.collapse()
+    }
 
     fun setLeftButtonAction(action: () -> Unit) = binding.leftButton.setOnClickListener {
         action()
@@ -138,43 +132,41 @@ class MaterialBanner @JvmOverloads constructor(
         action()
     }
 
-    private fun View.expand() {
-        this@expand.measure(
+    fun show() {
+        measure(
             LayoutParams.MATCH_CONSTRAINT,
             LayoutParams.WRAP_CONTENT
         )
-        val targetHeight = this@expand.measuredHeight
+        val targetHeight = measuredHeight
 
-        this@expand.layoutParams.height = 0
-        this@expand.visibility = View.VISIBLE
+        layoutParams.height = 0
+        visibility = View.VISIBLE
         val animation = object : Animation() {
             override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
-                this@expand.layoutParams.height = if (interpolatedTime == 1f)
+                layoutParams.height = if (interpolatedTime == 1f)
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 else
                     (targetHeight * interpolatedTime).toInt()
-                this@expand.requestLayout()
+                requestLayout()
             }
 
             override fun willChangeBounds(): Boolean = true
         }
 
         animation.duration =
-            (targetHeight / this@expand.context.resources.displayMetrics.density).toInt().toLong()
-        this@expand.startAnimation(animation)
+            (targetHeight / context.resources.displayMetrics.density).toInt().toLong()
+        startAnimation(animation)
     }
 
-    private fun View.collapse() {
-        val initialHeight = this.measuredHeight
-
+    fun dismiss() {
+        val initialHeight = measuredHeight
         val animation = object : Animation() {
             override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
                 if (interpolatedTime == 1f) {
-                    this@collapse.visibility = View.GONE
+                    visibility = View.GONE
                 } else {
-                    this@collapse.layoutParams.height =
-                        initialHeight - (initialHeight * interpolatedTime).toInt()
-                    this@collapse.requestLayout()
+                    layoutParams.height = initialHeight - (initialHeight * interpolatedTime).toInt()
+                    requestLayout()
                 }
             }
 
@@ -182,9 +174,8 @@ class MaterialBanner @JvmOverloads constructor(
         }
 
         animation.duration =
-            (initialHeight / this.context.resources.displayMetrics.density).toInt().toLong()
-        this.startAnimation(animation)
+            (initialHeight / context.resources.displayMetrics.density).toInt().toLong()
+        startAnimation(animation)
     }
-
 
 }

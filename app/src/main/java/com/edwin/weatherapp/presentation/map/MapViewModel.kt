@@ -21,8 +21,6 @@ class MapViewModel(
     private val eventChannel = Channel<ActionState>(Channel.BUFFERED)
     val eventsFlow = eventChannel.receiveAsFlow()
 
-    var isLocationNotChecked: Boolean = true
-
     fun getFusedLocation() = viewModelScope.launch {
         _uiState.value = MapUiState.Loading
         val location = getFusedLocationUseCase(Unit).single()
