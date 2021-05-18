@@ -13,6 +13,7 @@ import com.edwin.domain.usecase.UseCase
 import com.edwin.domain.usecase.map.GetAddressFromGeocoderUseCase
 import com.edwin.domain.usecase.map.GetFusedLocationUseCase
 import com.edwin.domain.usecase.weather.GetWeatherDetailsUseCase
+import com.edwin.weatherapp.di.util.Constants
 import com.edwin.weatherapp.presentation.map.MapViewModel
 import com.edwin.weatherapp.presentation.weatherDetails.WeatherDetailsViewModel
 import com.google.android.gms.location.LocationServices
@@ -21,45 +22,52 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
-val dataModule = module {
+object AppModule {
+    val dataModule = module {
 
-    // FusedLocationProvider
-    single { LocationServices.getFusedLocationProviderClient(androidContext()) }
+        // FusedLocationProvider
+        single { LocationServices.getFusedLocationProviderClient(androidContext()) }
 
-    // Location 
-    single { GetLocationDataSource(get()) }
+        // Location
+        single { GetLocationDataSource(get()) }
 
-    // Geocoder
-    single { Geocoder(androidContext()) }
+        // Geocoder
+        single { Geocoder(androidContext()) }
 
-    // Get address from Geocoder
-    single { GeocoderDataSource(get()) }
+        // Get address from Geocoder
+        single { GeocoderDataSource(get()) }
 
-    // WeatherRepository
-    single<WeatherRepository> {
-        WeatherRepositoryImpl(
-            RetrofitClient.weatherDataSource,
-            get(),
-            get()
-        )
+        // WeatherRepository
+        single<WeatherRepository> {
+            WeatherRepositoryImpl(
+                RetrofitClient.weatherDataSource,
+                get(),
+                get()
+            )
+        }
     }
-}
 
-val useCaseModule = module {
-    single<UseCase<Location, Unit>>(
-        named("fusedLocation")
-    ) { GetFusedLocationUseCase(get()) }
+    val useCaseModule = module {
+        single<UseCase<Location, Unit>>(
+            named(Constants.fusedLocation)
+        ) { GetFusedLocationUseCase(get()) }
 
-    single<UseCase<Address, GetAddressFromGeocoderUseCase.Params>>(
-        named("addressFromGeocoder")
-    ) { GetAddressFromGeocoderUseCase(get()) }
+        single<UseCase<Address, GetAddressFromGeocoderUseCase.Params>>(
+            named(Constants.addressFromGeocoder)
+        ) { GetAddressFromGeocoderUseCase(get()) }
 
-    single<UseCase<WeatherDetails?, GetWeatherDetailsUseCase.Params>>(
-        named("weatherDetails")
-    ) { GetWeatherDetailsUseCase(get()) }
-}
+        single<UseCase<WeatherDetails?, GetWeatherDetailsUseCase.Params>>(
+            named(Constants.weatherDetails)
+        ) { GetWeatherDetailsUseCase(get()) }
+    }
 
-val viewModelModule = module {
-    viewModel { MapViewModel(get(named("fusedLocation")), get(named("addressFromGeocoder"))) }
-    viewModel { WeatherDetailsViewModel(get(named("weatherDetails"))) }
+    val viewModelModule = module {
+        viewModel {
+            MapViewModel(
+                get(named(Constants.fusedLocation)),
+                get(named(Constants.addressFromGeocoder))
+            )
+        }
+        viewModel { WeatherDetailsViewModel(get(named(Constants.weatherDetails))) }
+    }
 }

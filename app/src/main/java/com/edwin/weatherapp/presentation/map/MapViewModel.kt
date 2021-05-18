@@ -23,26 +23,22 @@ class MapViewModel(
 
     fun getFusedLocation() = viewModelScope.launch {
         _uiState.value = MapUiState.Loading
-        val location = getFusedLocationUseCase(Unit).single()
-        location.fold(
-            onSuccess = { _uiState.value = MapUiState.CurrentLocationLoaded(it) },
-            onFailure = {
+        getFusedLocationUseCase(Unit).single()
+            .onSuccess { _uiState.value = MapUiState.CurrentLocationLoaded(it) }
+            .onFailure {
                 _uiState.value = MapUiState.Error
                 eventChannel.send(ActionState.ShowError(it))
             }
-        )
     }
 
     fun getAddress(latitude: Double, longitude: Double) = viewModelScope.launch {
         _uiState.value = MapUiState.Loading
-        val address = getAddressFromGeocoderUseCase(Params(latitude, longitude)).single()
-        address.fold(
-            onSuccess = { _uiState.value = MapUiState.AddressLoaded(it) },
-            onFailure = {
+        getAddressFromGeocoderUseCase(Params(latitude, longitude)).single()
+            .onSuccess { _uiState.value = MapUiState.AddressLoaded(it) }
+            .onFailure {
                 _uiState.value = MapUiState.Error
                 eventChannel.send(ActionState.ShowError(it))
             }
-        )
     }
 
     sealed class MapUiState {
