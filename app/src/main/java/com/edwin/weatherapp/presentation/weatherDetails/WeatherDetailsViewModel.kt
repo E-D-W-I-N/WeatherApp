@@ -20,11 +20,9 @@ class WeatherDetailsViewModel(
 
     fun getWeatherDetails(latitude: Float, longitude: Float) = viewModelScope.launch {
         _uiState.value = WeatherUiState.Loading
-        val weatherDetails = getWeatherDetailsUseCase(Params(latitude, longitude)).single()
-        weatherDetails.fold(
-            onSuccess = { _uiState.value = WeatherUiState.WeatherDetailsLoaded(it) },
-            onFailure = { _uiState.value = WeatherUiState.Error(it) }
-        )
+        getWeatherDetailsUseCase(Params(latitude, longitude)).single()
+            .onSuccess { _uiState.value = WeatherUiState.WeatherDetailsLoaded(it) }
+            .onFailure { _uiState.value = WeatherUiState.Error(it) }
     }
 
     sealed class WeatherUiState {
