@@ -9,6 +9,5 @@ enum class BriefWeatherInfo {
     RAIN,
     THUNDERSTORM,
     SNOW,
-    MIST,
-    DEFAULT
+    MIST
 }

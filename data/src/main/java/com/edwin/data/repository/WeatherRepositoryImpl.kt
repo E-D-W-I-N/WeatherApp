@@ -1,6 +1,5 @@
 package com.edwin.data.repository
 
-import android.location.Address
 import android.location.Location
 import com.edwin.data.BuildConfig
 import com.edwin.data.device.GetLocationDataSource
@@ -44,12 +43,12 @@ class WeatherRepositoryImpl(
     override fun getFusedLocation(): Location =
         getLocationDataSource.getFusedLocation() ?: throw MapException.NoLastLocation
 
-    override fun getAddress(
+    override fun getCityName(
         latitude: Double,
         longitude: Double
-    ): Address {
+    ): String {
         return try {
-            geocoderDataSource.getAddressFromGeocoder(latitude, longitude)
+            geocoderDataSource.getCityNameFromGeocoder(latitude, longitude)
         } catch (e: Exception) {
             when (e) {
                 is IOException -> throw MapException.GeocoderFailed

@@ -25,15 +25,14 @@ private val String.asEnumValueName: String
         return this.replace(' ', '_').uppercase()
     }
 
-inline fun <reified T : Enum<T>> valueOf(type: String, default: T): T {
+inline fun <reified T : Enum<T>> valueOf(type: String): T? {
     return try {
         java.lang.Enum.valueOf(T::class.java, type)
     } catch (e: IllegalArgumentException) {
-        default
+        null
     }
 }
 
-private fun toBriefWeatherInfo(description: String) = valueOf(
-    description.asEnumValueName,
-    BriefWeatherInfo.DEFAULT
-)
+private fun toBriefWeatherInfo(
+    description: String
+) = valueOf<BriefWeatherInfo>(description.asEnumValueName)

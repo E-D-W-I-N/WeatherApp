@@ -5,7 +5,7 @@ import androidx.cardview.widget.CardView
 
 const val positionHidden = 400f
 const val positionShown = 0f
-const val defaultDuration = 2000L
+const val defaultDuration = 500L
 
 fun CardView.animateIn(
     startPosition: Float = positionHidden,
@@ -21,16 +21,14 @@ fun CardView.animateIn(
 }
 
 fun CardView.animateOut(
-    startPosition: Float = positionShown,
     endPosition: Float = positionHidden,
     duration: Long = defaultDuration
 ) {
-    translationY = startPosition
     animate()
         .translationY(endPosition)
         .setDuration(duration)
         .withEndAction {
-            visibility = View.INVISIBLE
+            visibility = View.GONE
         }
         .start()
 }
