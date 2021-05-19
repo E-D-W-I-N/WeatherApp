@@ -1,6 +1,5 @@
 package com.edwin.weatherapp.di
 
-import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import com.edwin.data.device.GetLocationDataSource
@@ -10,7 +9,7 @@ import com.edwin.data.repository.WeatherRepositoryImpl
 import com.edwin.domain.WeatherRepository
 import com.edwin.domain.model.WeatherDetails
 import com.edwin.domain.usecase.UseCase
-import com.edwin.domain.usecase.map.GetAddressFromGeocoderUseCase
+import com.edwin.domain.usecase.map.GetCityNameFromGeocoderUseCase
 import com.edwin.domain.usecase.map.GetFusedLocationUseCase
 import com.edwin.domain.usecase.weather.GetWeatherDetailsUseCase
 import com.edwin.weatherapp.di.util.Constants
@@ -52,9 +51,9 @@ object AppModule {
             named(Constants.fusedLocation)
         ) { GetFusedLocationUseCase(get()) }
 
-        single<UseCase<Address, GetAddressFromGeocoderUseCase.Params>>(
+        single<UseCase<String, GetCityNameFromGeocoderUseCase.Params>>(
             named(Constants.addressFromGeocoder)
-        ) { GetAddressFromGeocoderUseCase(get()) }
+        ) { GetCityNameFromGeocoderUseCase(get()) }
 
         single<UseCase<WeatherDetails?, GetWeatherDetailsUseCase.Params>>(
             named(Constants.weatherDetails)
