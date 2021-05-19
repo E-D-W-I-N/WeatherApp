@@ -5,30 +5,42 @@ import androidx.lifecycle.viewModelScope
 import com.edwin.domain.model.WeatherDetails
 import com.edwin.domain.usecase.UseCase
 import com.edwin.domain.usecase.weather.GetWeatherDetailsUseCase.Params
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.single
+import com.edwin.weatherapp.presentation.weatherDetails.model.WeatherAction
+import com.edwin.weatherapp.presentation.weatherDetails.model.WeatherEvent
+import com.edwin.weatherapp.presentation.weatherDetails.model.WeatherViewState
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class WeatherDetailsViewModel(
     private val getWeatherDetailsUseCase: UseCase<WeatherDetails?, Params>
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<WeatherUiState>(WeatherUiState.Default)
-    val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
+    private val _viewStates = MutableStateFlow(WeatherViewState())
+    val viewStates: StateFlow<WeatherViewState> = _viewStates.asStateFlow()
 
-    fun getWeatherDetails(latitude: Float, longitude: Float) = viewModelScope.launch {
-        _uiState.value = WeatherUiState.Loading
-        getWeatherDetailsUseCase(Params(latitude, longitude)).single()
-            .onSuccess { _uiState.value = WeatherUiState.WeatherDetailsLoaded(it) }
-            .onFailure { _uiState.value = WeatherUiState.Error(it) }
+    private val _viewActions = Channel<WeatherAction>()
+    val viewActions = _viewActions.receiveAsFlow()
+
+    fun obtainEvent(viewEvent: WeatherEvent) {
+        when (viewEvent) {
+            is WeatherEvent.FetchWeather -> getWeatherDetails(
+                viewEvent.latitude, viewEvent.longitude
+            )
+        }
     }
 
-    sealed class WeatherUiState {
-        object Loading : WeatherUiState()
-        object Default : WeatherUiState()
-        data class Error(val throwable: Throwable) : WeatherUiState()
-        data class WeatherDetailsLoaded(val weatherDetails: WeatherDetails?) : WeatherUiState()
+    private fun getWeatherDetails(latitude: Float, longitude: Float) = viewModelScope.launch {
+        _viewStates.value = _viewStates.value.copy(isLoading = true)
+        getWeatherDetailsUseCase(Params(latitude, longitude)).single()
+            .onSuccess {
+                _viewStates.value = _viewStates.value.copy(isLoading = false, weatherDetails = it)
+                if (it?.briefWeatherInfo == null) {
+                    _viewActions.send(WeatherAction.ShowNoImageSnackbar)
+                }
+            }
+            .onFailure {
+                _viewStates.value = _viewStates.value.copy(isLoading = false, error = it)
+            }
     }
 }

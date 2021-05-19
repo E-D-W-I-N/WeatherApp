@@ -1,55 +1,69 @@
 package com.edwin.weatherapp.presentation.map
 
-import android.location.Address
 import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edwin.domain.usecase.UseCase
-import com.edwin.domain.usecase.map.GetAddressFromGeocoderUseCase.Params
+import com.edwin.domain.usecase.map.GetCityNameFromGeocoderUseCase.Params
+import com.edwin.weatherapp.presentation.map.model.MapAction
+import com.edwin.weatherapp.presentation.map.model.MapEvent
+import com.edwin.weatherapp.presentation.map.model.MapViewState
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class MapViewModel(
     private val getFusedLocationUseCase: UseCase<Location, Unit>,
-    private val getAddressFromGeocoderUseCase: UseCase<Address, Params>
+    private val getCityNameFromGeocoderUseCase: UseCase<String, Params>
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Default)
-    val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
+    private val _viewStates = MutableStateFlow(MapViewState())
+    val viewStates: StateFlow<MapViewState> = _viewStates.asStateFlow()
 
-    private val eventChannel = Channel<ActionState>(Channel.BUFFERED)
-    val eventsFlow = eventChannel.receiveAsFlow()
+    private val _viewActions = Channel<MapAction>()
+    val viewActions = _viewActions.receiveAsFlow()
 
-    fun getFusedLocation() = viewModelScope.launch {
-        _uiState.value = MapUiState.Loading
+    fun obtainEvent(viewEvent: MapEvent) {
+        when (viewEvent) {
+            is MapEvent.GetFusedLocation -> getFusedLocation()
+            is MapEvent.GetCityName -> getCityName(viewEvent.latitude, viewEvent.longitude)
+            is MapEvent.SetClickPosition -> setClickPosition(viewEvent.latLng)
+        }
+    }
+
+    private fun getFusedLocation() = viewModelScope.launch {
+        _viewStates.value = _viewStates.value.copy(isLoading = true)
         getFusedLocationUseCase(Unit).single()
-            .onSuccess { _uiState.value = MapUiState.CurrentLocationLoaded(it) }
+            .onSuccess {
+                _viewStates.value = _viewStates.value.copy(isLoading = false, fusedLocation = it)
+            }
             .onFailure {
-                _uiState.value = MapUiState.Error
-                eventChannel.send(ActionState.ShowError(it))
+                _viewStates.value = _viewStates.value.copy(isLoading = false)
+                _viewActions.send(MapAction.ShowError(it))
             }
     }
 
-    fun getAddress(latitude: Double, longitude: Double) = viewModelScope.launch {
-        _uiState.value = MapUiState.Loading
-        getAddressFromGeocoderUseCase(Params(latitude, longitude)).single()
-            .onSuccess { _uiState.value = MapUiState.AddressLoaded(it) }
+    private fun getCityName(latitude: Double, longitude: Double) = viewModelScope.launch {
+        _viewStates.value = _viewStates.value.copy(isLoading = true)
+        val latLng = LatLng(latitude, longitude)
+        getCityNameFromGeocoderUseCase(Params(latitude, longitude)).single()
+            .onSuccess {
+                _viewStates.value = _viewStates.value.copy(
+                    isLoading = false,
+                    fusedLocation = null,
+                    cityName = it,
+                    clickPosition = latLng
+                )
+            }
             .onFailure {
-                _uiState.value = MapUiState.Error
-                eventChannel.send(ActionState.ShowError(it))
+                _viewStates.value = _viewStates.value.copy(isLoading = false)
+                _viewActions.send(MapAction.ShowError(it))
             }
     }
 
-    sealed class MapUiState {
-        object Loading : MapUiState()
-        object Error : MapUiState()
-        object Default : MapUiState()
-        data class CurrentLocationLoaded(val location: Location) : MapUiState()
-        data class AddressLoaded(val address: Address) : MapUiState()
+    private fun setClickPosition(latLng: LatLng) {
+        _viewStates.value = _viewStates.value.copy(cityName = null, clickPosition = latLng)
     }
 
-    sealed class ActionState {
-        data class ShowError(val throwable: Throwable) : ActionState()
-    }
 }

@@ -1,19 +1,18 @@
 package com.edwin.data.network
 
-import android.location.Address
 import android.location.Geocoder
 import com.edwin.domain.exception.MapException
 
 class GeocoderDataSource(private val geocoder: Geocoder) {
 
-    fun getAddressFromGeocoder(
+    fun getCityNameFromGeocoder(
         latitude: Double,
         longitude: Double
-    ): Address {
+    ): String {
         val addresses = geocoder.getFromLocation(latitude, longitude, 1)
         if (addresses.isEmpty() || addresses.first().locality.isNullOrEmpty()) {
             throw MapException.CityNotFound
         }
-        return addresses.first()
+        return addresses.first().locality
     }
 }

@@ -2,14 +2,13 @@ package com.edwin.weatherapp.presentation.map
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Address
 import android.os.Bundle
 import android.view.*
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -18,6 +17,9 @@ import com.edwin.domain.exception.MapException
 import com.edwin.weatherapp.R
 import com.edwin.weatherapp.databinding.MapFragmentBinding
 import com.edwin.weatherapp.extensions.*
+import com.edwin.weatherapp.presentation.map.model.MapAction
+import com.edwin.weatherapp.presentation.map.model.MapEvent
+import com.edwin.weatherapp.presentation.map.model.MapViewState
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -43,7 +45,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            viewModel.getFusedLocation()
+            viewModel.obtainEvent(MapEvent.GetFusedLocation)
         }
     }
 
@@ -52,7 +54,6 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         savedInstanceState?.let {
             isLocationNotChecked = it.getBoolean(IS_LOCATION_NOT_CHECKED)
         }
-
         binding.apply {
             mapView.onCreate(savedInstanceState)
             mapView.getMapAsync(this@MapFragment)
@@ -60,64 +61,70 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         setHasOptionsMenu(true)
     }
 
-    private fun setupObservers() {
-        val uiStateFlow = viewModel.uiState.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-        uiStateFlow.onEach { state ->
-            when (state) {
-                is MapViewModel.MapUiState.Loading -> binding.progressBar.visibility = View.VISIBLE
-                is MapViewModel.MapUiState.CurrentLocationLoaded -> {
-                    binding.progressBar.visibility = View.GONE
-                    val latLng = LatLng(state.location.latitude, state.location.longitude)
-                    moveCameraToLocation(latLng)
-                }
-                is MapViewModel.MapUiState.AddressLoaded -> {
-                    binding.progressBar.visibility = View.GONE
-                    setupShowWeatherWindow(state.address)
-                }
-                is MapViewModel.MapUiState.Error -> binding.progressBar.visibility = View.GONE
-                else -> Unit
-            }
-        }.launchIn(viewLifecycleOwner.lifecycleScope)
-
-        val eventsFlow = viewModel.eventsFlow.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-        eventsFlow.onEach { event ->
-            when (event) {
-                is MapViewModel.ActionState.ShowError -> {
-                    when (event.throwable) {
-                        is MapException.GeocoderFailed -> showSnackbar(
-                            getString(R.string.check_connection_error_text)
-                        )
-                        is MapException.CityNotFound -> showSnackbar(
-                            getString(R.string.no_city_error_text)
-                        )
-                        is MapException.NoLastLocation -> {
-                            binding.banner.showBanner(
-                                message = R.string.current_location_error_text,
-                                icon = R.drawable.ic_location_off,
-                                leftBtnText = R.string.action_dismiss,
-                                rightBtnText = R.string.action_retry,
-                                leftButtonAction = { binding.banner.dismiss() },
-                                rightButtonAction = {
-                                    binding.banner.dismiss().also { viewModel.getFusedLocation() }
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }.launchIn(viewLifecycleOwner.lifecycleScope)
-    }
-
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-        setupObservers()
+
+        val viewStates = viewModel.viewStates.flowWithLifecycle(lifecycle)
+        viewStates.onEach { bindViewState(it) }.launchIn(viewLifecycleOwner.lifecycleScope)
+        val viewActions = viewModel.viewActions.flowWithLifecycle(lifecycle)
+        viewActions.onEach { bindViewAction(it) }.launchIn(viewLifecycleOwner.lifecycleScope)
+
         if (isLocationNotChecked) {
             checkPermissions()
             isLocationNotChecked = false
         }
         map.setOnMapClickListener { latLng ->
-            moveCameraToLocation(latLng)
-            viewModel.getAddress(latLng.latitude, latLng.longitude)
+            viewModel.obtainEvent(MapEvent.SetClickPosition(latLng))
+            viewModel.obtainEvent(MapEvent.GetCityName(latLng.latitude, latLng.longitude))
+        }
+    }
+
+    private fun bindViewState(viewState: MapViewState) = with(binding) {
+        progressBar.isVisible = viewState.isLoading
+        when {
+            viewState.fusedLocation != null -> {
+                val latLng = LatLng(
+                    viewState.fusedLocation.latitude,
+                    viewState.fusedLocation.longitude
+                )
+                moveCameraToLocation(latLng)
+                viewModel.obtainEvent(MapEvent.GetCityName(latLng.latitude, latLng.longitude))
+            }
+            viewState.cityName != null && viewState.clickPosition != null -> {
+                setupShowWeatherWindow(viewState.cityName, viewState.clickPosition)
+            }
+            viewState.cityName == null && viewState.clickPosition != null -> {
+                if (showWeatherWindow.isVisible) {
+                    showWeatherWindow.animateOut()
+                }
+                moveCameraToLocation(viewState.clickPosition)
+            }
+            else -> Unit
+        }
+    }
+
+    private fun bindViewAction(viewAction: MapAction) {
+        when (viewAction) {
+            is MapAction.ShowError -> {
+                when (viewAction.throwable) {
+                    is MapException.GeocoderFailed -> showSnackbar(
+                        getString(R.string.check_connection_error_text)
+                    )
+                    is MapException.CityNotFound -> showSnackbar(
+                        getString(R.string.no_city_error_text)
+                    )
+                    is MapException.NoLastLocation -> {
+                        binding.banner.showBanner(
+                            message = R.string.current_location_error_text,
+                            icon = R.drawable.ic_location_off,
+                            leftBtnText = R.string.action_dismiss,
+                            rightBtnText = R.string.action_retry,
+                            leftButtonAction = { binding.banner.dismiss() },
+                            rightButtonAction = { viewModel.obtainEvent(MapEvent.GetFusedLocation) }
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -134,15 +141,18 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
         map.animateCamera(cameraPosition)
     }
 
-    private fun setupShowWeatherWindow(address: Address) = with(binding) {
-        val latLng = LatLng(address.latitude, address.longitude)
-        moveCameraToLocation(latLng)
-        cityName.text = address.locality
-        cityLatlng.text = getString(R.string.cityLatlng, address.latitude, address.longitude)
+    private fun setupShowWeatherWindow(cityName: String, clickPosition: LatLng) = with(binding) {
+        moveCameraToLocation(clickPosition)
+        this.cityName.text = cityName
+        cityLatlng.text = getString(
+            R.string.cityLatlng,
+            clickPosition.latitude,
+            clickPosition.longitude
+        )
         closeWindowButton.setOnClickListener { showWeatherWindow.animateOut() }
         showWeatherButton.setOnClickListener {
             val action = MapFragmentDirections.actionMapFragmentToWeatherDetailsFragment(
-                address.locality, address.latitude.toFloat(), address.longitude.toFloat()
+                cityName, clickPosition.latitude.toFloat(), clickPosition.longitude.toFloat()
             )
             findNavController().navigate(action)
         }
@@ -155,7 +165,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
                 requireContext(),
                 LOCATION_PERMISSION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                viewModel.getFusedLocation()
+                viewModel.obtainEvent(MapEvent.GetFusedLocation)
             }
             shouldShowRequestPermissionRationale(LOCATION_PERMISSION) -> {
                 showDialog()
@@ -191,7 +201,7 @@ class MapFragment : Fragment(R.layout.map_fragment), OnMapReadyCallback {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(IS_LOCATION_NOT_CHECKED, isLocationNotChecked)
+        outState.putBoolean(IS_LOCATION_NOT_CHECKED, false)
         super.onSaveInstanceState(outState)
     }
 

@@ -1,6 +1,5 @@
 package com.edwin.domain
 
-import android.location.Address
 import android.location.Location
 import com.edwin.domain.model.WeatherDetails
 
@@ -10,5 +9,5 @@ interface WeatherRepository {
 
     fun getFusedLocation(): Location
 
-    fun getAddress(latitude: Double, longitude: Double): Address
+    fun getCityName(latitude: Double, longitude: Double): String
 }
