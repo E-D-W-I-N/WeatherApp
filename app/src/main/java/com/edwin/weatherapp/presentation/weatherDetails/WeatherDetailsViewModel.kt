@@ -34,13 +34,21 @@ class WeatherDetailsViewModel(
         _viewStates.value = _viewStates.value.copy(isLoading = true)
         getWeatherDetailsUseCase(Params(latitude, longitude)).single()
             .onSuccess {
-                _viewStates.value = _viewStates.value.copy(isLoading = false, weatherDetails = it)
+                _viewStates.value = _viewStates.value.copy(
+                    isLoading = false,
+                    error = null,
+                    weatherDetails = it
+                )
                 if (it?.briefWeatherInfo == null) {
                     _viewActions.send(WeatherAction.ShowNoImageSnackbar)
                 }
             }
             .onFailure {
-                _viewStates.value = _viewStates.value.copy(isLoading = false, error = it)
+                _viewStates.value = _viewStates.value.copy(
+                    isLoading = false,
+                    error = it,
+                    weatherDetails = null
+                )
             }
     }
 }
